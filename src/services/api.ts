@@ -406,6 +406,61 @@ export const getRekeningList = async () => {
   return res.data;
 };
 
+export const createRekening = async (payload: {
+  kode_rekening: string;
+  nomor_rekening: string;
+  nama_rekening: string;
+}) => {
+  const res = await api.post("/spd/rekening", payload);
+  return res.data;
+};
+
+export const updateRekening = async (
+  id: number,
+  payload: {
+    kode_rekening: string;
+    nomor_rekening: string;
+    nama_rekening: string;
+  }
+) => {
+  const res = await api.put(`/spd/rekening/${id}`, payload);
+  return res.data;
+};
+
+export const deleteRekening = async (id: number) => {
+  const res = await api.delete(`/spd/rekening/${id}`);
+  return res.data;
+};
+
+export const getAlatAngkutanList = async () => {
+  const res = await api.get("/spd/alat-angkutan");
+  return res.data;
+};
+
+export const createAlatAngkutan = async (payload: {
+  nama: string;
+  deskripsi?: string;
+}) => {
+  const res = await api.post("/spd/alat-angkutan", payload);
+  return res.data;
+};
+
+export const updateAlatAngkutan = async (
+  id: number,
+  payload: {
+    nama: string;
+    deskripsi?: string;
+  }
+) => {
+  const res = await api.put(`/spd/alat-angkutan/${id}`, payload);
+  return res.data;
+};
+
+export const deleteAlatAngkutan = async (id: number) => {
+  const res = await api.delete(`/spd/alat-angkutan/${id}`);
+  return res.data;
+};
+
 
 // ─── REPORTS ─────────────────────────────────────────────
 export const getReports = async (team: string, year?: number) => {

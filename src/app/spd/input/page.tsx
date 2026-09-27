@@ -8,8 +8,16 @@ import {
   createPegawai,
   createSpdPeserta,
   getRekeningList,
+  deleteRekening,
+  getAlatAngkutanList,
+  deleteAlatAngkutan,
 } from "@/services/api";
 import { showToast } from "@/components/ui/Toast";
+import {
+  RekeningModal,
+  AlatAngkutanModal,
+  SpdFieldActionButtons,
+} from "@/components/spd/SpdMasterModals";
 
 type StaffRow = { nama: string; nip: string; pangkat: string; jabatan: string };
 
@@ -43,6 +51,20 @@ export default function SpdInputPage() {
   // ── Data dari API ─────────────────────────────────────
   const [rekeningOptions, setRekeningOptions] = useState<any[]>([]);
   const [pegawaiOptions, setPegawaiOptions] = useState<any[]>([]);
+  const [angkutanOptions, setAngkutanOptions] = useState<any[]>([
+    "Kendaraan Dinas",
+    "Pesawat Udara",
+    "Kereta Api",
+    "Kapal Laut",
+    "Kendaraan Darat Lainnya",
+  ]);
+
+  // ── Modal states for Rekening & Alat Angkutan ─────────
+  const [isRekeningModalOpen, setIsRekeningModalOpen] = useState(false);
+  const [rekeningToEdit, setRekeningToEdit] = useState<any | null>(null);
+
+  const [isAngkutanModalOpen, setIsAngkutanModalOpen] = useState(false);
+  const [angkutanToEdit, setAngkutanToEdit] = useState<any | null>(null);
 
   // ── Kalkulasi ─────────────────────────────────────────
   const lamaHari =
@@ -61,15 +83,32 @@ export default function SpdInputPage() {
   const totalStaff = validStaff.length * lamaHari * uangHarian;
   const grandTotal = totalKabid + totalStaff;
 
-  // ── Fetch data rekening & pegawai ─────────────────────
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const rRes = await getRekeningList();
-        setRekeningOptions(Array.isArray(rRes?.data) ? rRes.data : []);
-      } catch {
-        setRekeningOptions([]);
+  // ── Fetch data rekening, pegawai, angkutan ───────────
+  const fetchRekening = async () => {
+    try {
+      const rRes = await getRekeningList();
+      setRekeningOptions(Array.isArray(rRes?.data) ? rRes.data : []);
+    } catch {
+      setRekeningOptions([]);
+    }
+  };
+
+  const fetchAngkutan = async () => {
+    try {
+      const aRes = await getAlatAngkutanList();
+      if (Array.isArray(aRes?.data) && aRes.data.length > 0) {
+        setAngkutanOptions(aRes.data);
       }
+    } catch {
+      // fallback to existing list
+    }
+  };
+
+  useEffect(() => {
+    fetchRekening();
+    fetchAngkutan();
+
+    const fetchPegawai = async () => {
       try {
         const pRes = await getPegawaiList();
         setPegawaiOptions(Array.isArray(pRes?.data) ? pRes.data : []);
@@ -77,8 +116,82 @@ export default function SpdInputPage() {
         setPegawaiOptions([]);
       }
     };
-    fetchData();
+    fetchPegawai();
   }, []);
+
+  // ── Handlers Rekening ────────────────────────────────
+  const handleDeleteRekening = async () => {
+    const sel = rekeningOptions.find((r) => r.id === rekeningId);
+    if (!sel) return;
+    if (
+      !window.confirm(
+        `Hapus kode rekening "${sel.kode_rekening} - ${sel.nama_rekening}"?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await deleteRekening(sel.id);
+      showToast.success("Kode rekening berhasil dihapus!");
+      setRekeningId("");
+      fetchRekening();
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Gagal menghapus kode rekening";
+      showToast.error(msg);
+    }
+  };
+
+  // ── Handlers Alat Angkutan ───────────────────────────
+  const handleDeleteAngkutan = async () => {
+    const sel = angkutanOptions.find((a: any) =>
+      typeof a === "string" ? a === alatAngkutan : a.nama === alatAngkutan
+    );
+    const selName = typeof sel === "string" ? sel : sel?.nama || alatAngkutan;
+
+    if (!window.confirm(`Hapus alat angkutan "${selName}"?`)) {
+      return;
+    }
+
+    if (sel && typeof sel === "object" && sel.id) {
+      try {
+        await deleteAlatAngkutan(sel.id);
+        showToast.success("Alat angkutan berhasil dihapus!");
+        const nextList = angkutanOptions.filter((a: any) =>
+          typeof a === "string" ? a !== selName : a.id !== sel.id
+        );
+        setAngkutanOptions(nextList);
+        const fallback = nextList[0]
+          ? typeof nextList[0] === "string"
+            ? nextList[0]
+            : nextList[0].nama
+          : "Kendaraan Dinas";
+        setAlatAngkutan(fallback);
+        fetchAngkutan();
+      } catch (err: any) {
+        const msg =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Gagal menghapus alat angkutan";
+        showToast.error(msg);
+      }
+    } else {
+      const nextList = angkutanOptions.filter((a: any) =>
+        typeof a === "string" ? a !== selName : a.nama !== selName
+      );
+      setAngkutanOptions(nextList);
+      const fallback = nextList[0]
+        ? typeof nextList[0] === "string"
+          ? nextList[0]
+          : nextList[0].nama
+        : "Kendaraan Dinas";
+      setAlatAngkutan(fallback);
+      showToast.success("Alat angkutan berhasil dihapus!");
+    }
+  };
 
   // ── Staff handlers ────────────────────────────────────
   const addStaff = () => {
@@ -317,8 +430,29 @@ export default function SpdInputPage() {
                 />
               </div>
               <div>
-                <label style={label}>Kode Rekening</label>
-                <select style={select} value={rekeningId} onChange={(e) => setRekeningId(e.target.value ? Number(e.target.value) : "")}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                  <label style={{ ...label, marginBottom: 0 }}>Kode Rekening</label>
+                  <SpdFieldActionButtons
+                    onAdd={() => {
+                      setRekeningToEdit(null);
+                      setIsRekeningModalOpen(true);
+                    }}
+                    onEdit={() => {
+                      const sel = rekeningOptions.find((r) => r.id === rekeningId);
+                      if (sel) {
+                        setRekeningToEdit(sel);
+                        setIsRekeningModalOpen(true);
+                      }
+                    }}
+                    onDelete={handleDeleteRekening}
+                    hasSelection={Boolean(rekeningId)}
+                  />
+                </div>
+                <select
+                  style={select}
+                  value={rekeningId}
+                  onChange={(e) => setRekeningId(e.target.value ? Number(e.target.value) : "")}
+                >
                   <option value="">— Pilih Rekening —</option>
                   {rekeningOptions.map((r) => (
                     <option key={r.id} value={r.id}>
@@ -328,13 +462,40 @@ export default function SpdInputPage() {
                 </select>
               </div>
               <div>
-                <label style={label}>Alat Angkutan</label>
-                <select style={select} value={alatAngkutan} onChange={(e) => setAlatAngkutan(e.target.value)}>
-                  <option>Kendaraan Dinas</option>
-                  <option>Pesawat Udara</option>
-                  <option>Kereta Api</option>
-                  <option>Kapal Laut</option>
-                  <option>Kendaraan Darat Lainnya</option>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                  <label style={{ ...label, marginBottom: 0 }}>Alat Angkutan</label>
+                  <SpdFieldActionButtons
+                    onAdd={() => {
+                      setAngkutanToEdit(null);
+                      setIsAngkutanModalOpen(true);
+                    }}
+                    onEdit={() => {
+                      const sel = angkutanOptions.find((a: any) =>
+                        typeof a === "string" ? a === alatAngkutan : a.nama === alatAngkutan
+                      );
+                      if (sel) {
+                        setAngkutanToEdit(typeof sel === "object" ? sel : { nama: sel });
+                        setIsAngkutanModalOpen(true);
+                      }
+                    }}
+                    onDelete={handleDeleteAngkutan}
+                    hasSelection={Boolean(alatAngkutan)}
+                  />
+                </div>
+                <select
+                  style={select}
+                  value={alatAngkutan}
+                  onChange={(e) => setAlatAngkutan(e.target.value)}
+                >
+                  {angkutanOptions.map((a: any) => {
+                    const name = typeof a === "string" ? a : a.nama;
+                    const id = typeof a === "string" ? a : a.id;
+                    return (
+                      <option key={id} value={name}>
+                        {name}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             </div>
@@ -573,6 +734,38 @@ export default function SpdInputPage() {
           </button>
         </div>
       </div>
+
+      {/* Modal CRUD Rekening */}
+      <RekeningModal
+        isOpen={isRekeningModalOpen}
+        onClose={() => {
+          setIsRekeningModalOpen(false);
+          setRekeningToEdit(null);
+        }}
+        initialData={rekeningToEdit}
+        onSuccess={(saved) => {
+          fetchRekening();
+          if (saved?.id) {
+            setRekeningId(saved.id);
+          }
+        }}
+      />
+
+      {/* Modal CRUD Alat Angkutan */}
+      <AlatAngkutanModal
+        isOpen={isAngkutanModalOpen}
+        onClose={() => {
+          setIsAngkutanModalOpen(false);
+          setAngkutanToEdit(null);
+        }}
+        initialData={angkutanToEdit}
+        onSuccess={(saved) => {
+          fetchAngkutan();
+          if (saved?.nama) {
+            setAlatAngkutan(saved.nama);
+          }
+        }}
+      />
 
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
