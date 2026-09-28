@@ -6,6 +6,8 @@ import {
   createDetailPerjalanan,
   getPegawaiList,
   createPegawai,
+  updatePegawai,
+  deletePegawai,
   createSpdPeserta,
   getRekeningList,
   deleteRekening,
@@ -16,6 +18,7 @@ import { showToast } from "@/components/ui/Toast";
 import {
   RekeningModal,
   AlatAngkutanModal,
+  PegawaiModal,
   SpdFieldActionButtons,
 } from "@/components/spd/SpdMasterModals";
 
@@ -59,11 +62,14 @@ export default function SpdInputPage() {
     "Kendaraan Darat Lainnya",
   ]);
 
-  // ── Modal states for Rekening & Alat Angkutan ─────────
+  // ── Modal states for Rekening, Alat Angkutan, & Pegawai ──
   const [isRekeningModalOpen, setIsRekeningModalOpen] = useState(false);
   const [isAngkutanModalOpen, setIsAngkutanModalOpen] = useState(false);
+  const [isPegawaiModalOpen, setIsPegawaiModalOpen] = useState(false);
   const [rekeningToEdit, setRekeningToEdit] = useState<any>(null);
   const [angkutanToEdit, setAngkutanToEdit] = useState<any>(null);
+  const [pegawaiToEdit, setPegawaiToEdit] = useState<any>(null);
+  const [editingPegawaiTarget, setEditingPegawaiTarget] = useState<"kabid" | number | null>(null);
 
   // ── Kalkulasi ─────────────────────────────────────────
   const lamaHari =
@@ -230,13 +236,121 @@ export default function SpdInputPage() {
     setStaffList(updated);
   };
 
+  // ── Pegawai helpers & handlers (Edit & Delete only) ──
+  const activeKabidPegawai = pegawaiOptions.find(
+    (p) => (kabid.nip && p.nip === kabid.nip) || (kabid.nama && p.nama === kabid.nama)
+  );
+
+  const activeStaffPegawai = (index: number) =>
+    pegawaiOptions.find(
+      (p) =>
+        (staffList[index]?.nip && p.nip === staffList[index]?.nip) ||
+        (staffList[index]?.nama && p.nama === staffList[index]?.nama)
+    );
+
+  const handleEditKabidPegawai = () => {
+    if (!activeKabidPegawai) {
+      showToast.error("Pilih pegawai dari daftar terlebih dahulu!");
+      return;
+    }
+    setPegawaiToEdit(activeKabidPegawai);
+    setEditingPegawaiTarget("kabid");
+    setIsPegawaiModalOpen(true);
+  };
+
+  const handleDeleteKabidPegawai = async () => {
+    if (!activeKabidPegawai) {
+      showToast.error("Pilih pegawai dari daftar terlebih dahulu!");
+      return;
+    }
+    if (!window.confirm(`Hapus data pegawai "${activeKabidPegawai.nama}" dari daftar master pegawai?`)) {
+      return;
+    }
+    try {
+      await deletePegawai(activeKabidPegawai.id);
+      showToast.success("Data pegawai berhasil dihapus!");
+      setPegawaiOptions((prev) => prev.filter((p) => p.id !== activeKabidPegawai.id));
+      setKabid(emptyStaff());
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Gagal menghapus data pegawai";
+      showToast.error(msg);
+    }
+  };
+
+  const handleEditStaffPegawai = (index: number) => {
+    const p = activeStaffPegawai(index);
+    if (!p) {
+      showToast.error("Pilih pegawai dari daftar terlebih dahulu!");
+      return;
+    }
+    setPegawaiToEdit(p);
+    setEditingPegawaiTarget(index);
+    setIsPegawaiModalOpen(true);
+  };
+
+  const handleDeleteStaffPegawai = async (index: number) => {
+    const p = activeStaffPegawai(index);
+    if (!p) {
+      showToast.error("Pilih pegawai dari daftar terlebih dahulu!");
+      return;
+    }
+    if (!window.confirm(`Hapus data pegawai "${p.nama}" dari daftar master pegawai?`)) {
+      return;
+    }
+    try {
+      await deletePegawai(p.id);
+      showToast.success("Data pegawai berhasil dihapus!");
+      setPegawaiOptions((prev) => prev.filter((item) => item.id !== p.id));
+      const updated = [...staffList];
+      updated[index] = emptyStaff();
+      setStaffList(updated);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Gagal menghapus data pegawai";
+      showToast.error(msg);
+    }
+  };
+
+  const handlePegawaiSaved = (saved: any) => {
+    setPegawaiOptions((prev) =>
+      prev.map((p) => (p.id === saved.id ? { ...p, ...saved } : p))
+    );
+    if (editingPegawaiTarget === "kabid") {
+      setKabid({
+        nama: saved.nama,
+        nip: saved.nip,
+        pangkat: saved.pangkat,
+        jabatan: saved.jabatan,
+      });
+    } else if (typeof editingPegawaiTarget === "number") {
+      const updated = [...staffList];
+      updated[editingPegawaiTarget] = {
+        nama: saved.nama,
+        nip: saved.nip,
+        pangkat: saved.pangkat,
+        jabatan: saved.jabatan,
+      };
+      setStaffList(updated);
+    }
+    setEditingPegawaiTarget(null);
+  };
+
   // ── Auto-fill from pegawai list ───────────────────────
   const autofillKabid = (nip: string) => {
+    if (!nip) {
+      setKabid(emptyStaff());
+      return;
+    }
     const found = pegawaiOptions.find((p) => p.nip === nip);
     if (found)
       setKabid({ nama: found.nama, nip: found.nip, pangkat: found.pangkat, jabatan: found.jabatan });
   };
   const autofillStaff = (i: number, nip: string) => {
+    if (!nip) {
+      const updated = [...staffList];
+      updated[i] = emptyStaff();
+      setStaffList(updated);
+      return;
+    }
     const found = pegawaiOptions.find((p) => p.nip === nip);
     if (found) {
       const updated = [...staffList];
@@ -591,8 +705,19 @@ export default function SpdInputPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               {/* Autocomplete pilih dari daftar */}
               <div>
-                <label style={label}>Pilih dari Daftar Pegawai (NIP)</label>
-                <select style={select} onChange={(e) => autofillKabid(e.target.value)} defaultValue="">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", minHeight: "22px" }}>
+                  <label style={{ ...label, marginBottom: 0, whiteSpace: "nowrap" }}>Pilih dari Daftar Pegawai (NIP)</label>
+                  <SpdFieldActionButtons
+                    onEdit={handleEditKabidPegawai}
+                    onDelete={handleDeleteKabidPegawai}
+                    hasSelection={Boolean(activeKabidPegawai)}
+                  />
+                </div>
+                <select
+                  style={select}
+                  value={activeKabidPegawai ? activeKabidPegawai.nip : ""}
+                  onChange={(e) => autofillKabid(e.target.value)}
+                >
                   <option value="">— Ketik manual atau pilih dari daftar —</option>
                   {pegawaiOptions.filter((p) => p.role === "kabid").map((p) => (
                     <option key={p.id} value={p.nip}>{p.nama} — {p.jabatan}</option>
@@ -656,8 +781,19 @@ export default function SpdInputPage() {
 
                 {/* Autocomplete */}
                 <div style={{ marginBottom: "12px" }}>
-                  <label style={label}>Pilih dari Daftar Pegawai</label>
-                  <select style={select} onChange={(e) => autofillStaff(i, e.target.value)} defaultValue="">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", minHeight: "22px" }}>
+                    <label style={{ ...label, marginBottom: 0, whiteSpace: "nowrap" }}>Pilih dari Daftar Pegawai</label>
+                    <SpdFieldActionButtons
+                      onEdit={() => handleEditStaffPegawai(i)}
+                      onDelete={() => handleDeleteStaffPegawai(i)}
+                      hasSelection={Boolean(activeStaffPegawai(i))}
+                    />
+                  </div>
+                  <select
+                    style={select}
+                    value={activeStaffPegawai(i) ? activeStaffPegawai(i)?.nip : ""}
+                    onChange={(e) => autofillStaff(i, e.target.value)}
+                  >
                     <option value="">— Pilih untuk auto-isi —</option>
                     {pegawaiOptions.filter((p) => p.role === "staff").map((p) => (
                       <option key={p.id} value={p.nip}>{p.nama} — {p.jabatan}</option>
@@ -807,6 +943,18 @@ export default function SpdInputPage() {
             setAlatAngkutan(saved.nama);
           }
         }}
+      />
+
+      {/* Modal Ubah Data Pegawai */}
+      <PegawaiModal
+        isOpen={isPegawaiModalOpen}
+        onClose={() => {
+          setIsPegawaiModalOpen(false);
+          setPegawaiToEdit(null);
+          setEditingPegawaiTarget(null);
+        }}
+        initialData={pegawaiToEdit}
+        onSuccess={handlePegawaiSaved}
       />
 
       <style>{`

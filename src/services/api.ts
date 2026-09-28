@@ -408,6 +408,16 @@ export const createPegawai = async (payload: any) => {
   return res.data;
 };
 
+export const updatePegawai = async (id: number, payload: any) => {
+  const res = await api.put(`/spd/pegawai/${id}`, payload);
+  return res.data;
+};
+
+export const deletePegawai = async (id: number) => {
+  const res = await api.delete(`/spd/pegawai/${id}`);
+  return res.data;
+};
+
 export const createSpdPeserta = async (payload: { detail_perjalanan_id: number; pegawai_id: number[] }) => {
   const res = await api.post("/spd/spd-peserta", payload);
   return res.data;
