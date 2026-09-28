@@ -1863,6 +1863,137 @@ export const downloadBeritaAcaraDocx = async (params?: {
   return res.data;
 };
 
+// ============================================================
+// SMKI: FORMULIR RENCANA AUDIT (F05-SMKI)
+// ============================================================
+
+export interface AuditorItem {
+  id_auditor: number;
+  nama_auditor: string;
+  nip_auditor?: string | null;
+}
+
+export interface BidangAuditeeItem {
+  id_bidang_auditee: number;
+  bidang_auditee: string;
+}
+
+export interface LokasiAuditeeItem {
+  id_lokasi_auditee: number;
+  lokasi_auditee: string;
+}
+
+export interface AuditeeItem {
+  id_auditee: number;
+  id_bidang_auditee: number;
+  id_lokasi_auditee: number;
+  bidang?: BidangAuditeeItem;
+  lokasi?: LokasiAuditeeItem;
+}
+
+export interface DetailAuditItem {
+  id_detail_audit: number;
+  id_auditor: number;
+  id_auditee: number;
+  kontrol_SMKI: string;
+  tanggal_audit: string;
+  kode_prosedur?: string | null;
+  status: "SCHEDULED" | "IN PROGRESS" | "PENDING" | "COMPLETED";
+  catatan?: string | null;
+  bidang_nama: string;
+  lokasi_nama: string;
+  auditor_nama: string;
+  auditor_nip?: string | null;
+  auditor?: AuditorItem;
+  auditee?: AuditeeItem;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface RencanaAuditPayload {
+  kontrol_SMKI: string;
+  tanggal_audit: string;
+  id_auditor?: number | null;
+  nama_auditor?: string;
+  nip_auditor?: string;
+  id_bidang_auditee?: number | null;
+  bidang_auditee?: string;
+  id_lokasi_auditee?: number | null;
+  lokasi_auditee?: string;
+  kode_prosedur?: string;
+  status?: "SCHEDULED" | "IN PROGRESS" | "PENDING" | "COMPLETED";
+  catatan?: string;
+}
+
+export interface RencanaAuditStats {
+  total_terjadwal: number;
+  dalam_proses: number;
+  butuh_perhatian: number;
+  selesai: number;
+  total_aktif: number;
+}
+
+export interface RencanaAuditMetadata {
+  no_dokumen: string;
+  no_revisi: string;
+  tanggal_berlaku: string;
+  judul_formulir: string;
+}
+
+export interface RencanaAuditLookupData {
+  auditors: AuditorItem[];
+  bidang_auditee: BidangAuditeeItem[];
+  lokasi_auditee: LokasiAuditeeItem[];
+  standard_clauses: string[];
+  default_meta: {
+    no_dokumen: string;
+    no_revisi: string;
+    tanggal_berlaku: string;
+  };
+}
+
+export const getRencanaAuditList = async (params?: {
+  search?: string;
+  status?: string;
+  id_auditor?: number;
+  id_bidang_auditee?: number;
+  date_from?: string;
+  date_to?: string;
+  page?: number;
+  per_page?: number;
+}) => {
+  const res = await api.get("/smki/rencana-audit", { params });
+  return res.data;
+};
+
+export const getRencanaAuditLookup = async () => {
+  const res = await api.get("/smki/rencana-audit/lookup");
+  return res.data;
+};
+
+export const getRencanaAuditDetail = async (id: number) => {
+  const res = await api.get(`/smki/rencana-audit/${id}`);
+  return res.data;
+};
+
+export const createRencanaAudit = async (payload: RencanaAuditPayload) => {
+  const res = await api.post("/smki/rencana-audit", payload);
+  return res.data;
+};
+
+export const updateRencanaAudit = async (
+  id: number,
+  payload: Partial<RencanaAuditPayload>
+) => {
+  const res = await api.put(`/smki/rencana-audit/${id}`, payload);
+  return res.data;
+};
+
+export const deleteRencanaAudit = async (id: number) => {
+  const res = await api.delete(`/smki/rencana-audit/${id}`);
+  return res.data;
+};
+
 
 
 
