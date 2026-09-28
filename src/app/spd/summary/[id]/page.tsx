@@ -67,13 +67,21 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
 
   // Parse peserta to get kabid and staff counts
   const pesertaList = data?.raw?.peserta || [];
-  const hasPeserta = pesertaList.length > 0;
-  const staffCount = Math.max(0, pesertaList.length - 1); // Exclude kabid if present
-  const kabidCount = pesertaList.length > 0 ? 1 : 0; // Only count if first peserta exists
+  const isKabidObj = (p: any) =>
+    p?.pegawai?.role === "kabid" ||
+    /kepala\s+bidang/i.test(p?.pegawai?.jabatan || "") ||
+    /kabid/i.test(p?.pegawai?.jabatan || "");
+
+  const foundKabid = pesertaList.find((p: any) => isKabidObj(p));
+  const foundStaff = pesertaList.filter((p: any) => !isKabidObj(p));
+  const orderedList = foundKabid ? [foundKabid, ...foundStaff] : foundStaff;
+
+  const kabidCount = foundKabid ? 1 : 0;
+  const staffCount = foundStaff.length;
   
   // Calculate total cost
   const uangHarian = data?.raw?.uang_harian || 0;
-  const totalBiaya = lamaHari * uangHarian * (kabidCount + (staffCount > 0 ? staffCount : 1));
+  const totalBiaya = lamaHari * uangHarian * (kabidCount + staffCount);
 
   if (loading) {
     return <div style={{ padding: "40px", textAlign: "center" }}>Memuat dokumen...</div>;
@@ -181,7 +189,7 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "24px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: kabidCount > 0 ? "300px 1fr" : "1fr", gap: "24px" }}>
         {/* Kepala Bidang */}
         {kabidCount > 0 && (
           <div style={{ backgroundColor: "white", borderRadius: "8px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
@@ -192,43 +200,37 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
               <span style={{ fontSize: "13px", fontWeight: "700", color: "#b91c1c", letterSpacing: "0.5px" }}>KEPALA BIDANG<br/>(KABID)</span>
             </div>
             <div style={{ padding: "20px" }}>
-              {pesertaList.length > 0 ? (
-                <>
-                  <div style={{ marginBottom: "16px" }}>
-                    <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>NAMA</div>
-                    <div style={{ fontSize: "13px", fontWeight: "700", color: "#0f2540" }}>{pesertaList[0]?.pegawai?.nama || "-"}</div>
-                  </div>
-                  <div style={{ marginBottom: "16px" }}>
-                    <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>NIP</div>
-                    <div style={{ fontSize: "13px", color: "#334155" }}>{pesertaList[0]?.pegawai?.nip || "-"}</div>
-                  </div>
-                  <div style={{ marginBottom: "16px" }}>
-                    <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>PANGKAT / GOL</div>
-                    <div style={{ fontSize: "13px", color: "#334155" }}>{pesertaList[0]?.pegawai?.pangkat || "-"}</div>
-                  </div>
-                  <div style={{ marginBottom: "16px" }}>
-                    <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>JABATAN</div>
-                    <div style={{ fontSize: "12px", color: "#334155" }}>{pesertaList[0]?.pegawai?.jabatan || "-"}</div>
-                  </div>
-                  <div style={{ marginBottom: "0" }}>
-                    <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>TOTAL UANG</div>
-                    <div style={{ fontSize: "13px", fontWeight: "700", color: "#dc2626" }}>{formatRupiah(lamaHari * uangHarian)}</div>
-                  </div>
-                </>
-              ) : (
-                <div style={{ textAlign: "center", padding: "20px", color: "#94a3b8", fontSize: "13px" }}>Tidak ada data kabid</div>
-              )}
+              <div style={{ marginBottom: "16px" }}>
+                <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>NAMA</div>
+                <div style={{ fontSize: "13px", fontWeight: "700", color: "#0f2540" }}>{foundKabid?.pegawai?.nama || "-"}</div>
+              </div>
+              <div style={{ marginBottom: "16px" }}>
+                <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>NIP</div>
+                <div style={{ fontSize: "13px", color: "#334155" }}>{foundKabid?.pegawai?.nip || "-"}</div>
+              </div>
+              <div style={{ marginBottom: "16px" }}>
+                <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>PANGKAT / GOL</div>
+                <div style={{ fontSize: "13px", color: "#334155" }}>{foundKabid?.pegawai?.pangkat || "-"}</div>
+              </div>
+              <div style={{ marginBottom: "16px" }}>
+                <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>JABATAN</div>
+                <div style={{ fontSize: "12px", color: "#334155" }}>{foundKabid?.pegawai?.jabatan || "-"}</div>
+              </div>
+              <div style={{ marginBottom: "0" }}>
+                <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>TOTAL UANG</div>
+                <div style={{ fontSize: "13px", fontWeight: "700", color: "#dc2626" }}>{formatRupiah(lamaHari * uangHarian)}</div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Staff / Pengikut */}
+        {/* Daftar Peserta SPD */}
         <div style={{ backgroundColor: "white", borderRadius: "8px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
           <div style={{ backgroundColor: "#f1f5f9", padding: "12px 20px", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", gap: "8px" }}>
             <div style={{ backgroundColor: "#0f2540", color: "white", width: "24px", height: "24px", borderRadius: "4px", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
             </div>
-            <span style={{ fontSize: "13px", fontWeight: "700", color: "#0f2540", letterSpacing: "0.5px" }}>STAFF / PESERTA</span>
+            <span style={{ fontSize: "13px", fontWeight: "700", color: "#0f2540", letterSpacing: "0.5px" }}>DAFTAR PESERTA SPD</span>
           </div>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
             <thead>
@@ -242,17 +244,21 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
               </tr>
             </thead>
             <tbody>
-              {pesertaList && pesertaList.length > 0 ? (
-                pesertaList.map((p: any, index: number) => (
-                  <tr key={index} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: "16px 20px", color: "#64748b" }}>{String(index + 1).padStart(2, '0')}</td>
-                    <td style={{ padding: "16px 20px", fontWeight: "600", color: "#334155" }}>{p?.pegawai?.nama || "-"}</td>
-                    <td style={{ padding: "16px 20px", color: "#475569" }}>{p?.pegawai?.nip || "-"}</td>
-                    <td style={{ padding: "16px 20px", color: "#475569" }}>{p?.pegawai?.pangkat || "-"}</td>
-                    <td style={{ padding: "16px 20px", color: "#475569" }}>{p?.pegawai?.jabatan || "-"}</td>
-                    <td style={{ padding: "16px 20px", textAlign: "right", fontWeight: "700", color: "#0f2540" }}>{formatRupiah(lamaHari * uangHarian)}</td>
-                  </tr>
-                ))
+              {orderedList && orderedList.length > 0 ? (
+                orderedList.map((p: any, index: number) => {
+                  return (
+                    <tr key={index} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                      <td style={{ padding: "16px 20px", color: "#64748b" }}>{String(index + 1).padStart(2, '0')}</td>
+                      <td style={{ padding: "16px 20px", fontWeight: "600", color: "#334155" }}>
+                        {p?.pegawai?.nama || "-"}
+                      </td>
+                      <td style={{ padding: "16px 20px", color: "#475569" }}>{p?.pegawai?.nip || "-"}</td>
+                      <td style={{ padding: "16px 20px", color: "#475569" }}>{p?.pegawai?.pangkat || "-"}</td>
+                      <td style={{ padding: "16px 20px", color: "#475569" }}>{p?.pegawai?.jabatan || "-"}</td>
+                      <td style={{ padding: "16px 20px", textAlign: "right", fontWeight: "700", color: "#0f2540" }}>{formatRupiah(lamaHari * uangHarian)}</td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={6} style={{ padding: "20px", textAlign: "center", color: "#94a3b8" }}>Tidak ada data peserta</td>

@@ -294,8 +294,19 @@ export const fromApiDetailPerjalanan = (item: any) => {
       : item;
 
   const pesertaList = Array.isArray(source?.peserta) ? source.peserta : [];
-  const mainPeserta = pesertaList[0]?.pegawai || {};
-  const followers = pesertaList.slice(1).map((p: any) => ({
+
+  const isKabidObj = (p: any) =>
+    p?.pegawai?.role === "kabid" ||
+    /kepala\s+bidang/i.test(p?.pegawai?.jabatan || "") ||
+    /kabid/i.test(p?.pegawai?.jabatan || "");
+
+  const kabidItem = pesertaList.find((p: any) => isKabidObj(p));
+  const staffItems = pesertaList.filter((p: any) => !isKabidObj(p));
+  const orderedPesertaList = kabidItem ? [kabidItem, ...staffItems] : staffItems;
+
+  const mainPeserta = (kabidItem || orderedPesertaList[0])?.pegawai || {};
+
+  const followers = (kabidItem ? staffItems : orderedPesertaList.slice(1)).map((p: any) => ({
     nama: p?.pegawai?.nama || "",
     nip: p?.pegawai?.nip || "",
     pangkat: p?.pegawai?.pangkat || "",
@@ -306,14 +317,14 @@ export const fromApiDetailPerjalanan = (item: any) => {
     keterangan: p?.pegawai?.nip || "",
   }));
 
-  const participants = pesertaList.map((p: any) => ({
+  const participants = orderedPesertaList.map((p: any) => ({
     id: p?.id,
     nomorSpd: p?.nomor_spd || source?.travel_code || "",
     nama: p?.pegawai?.nama || "",
     nip: p?.pegawai?.nip || "",
     pangkat: p?.pegawai?.pangkat || "",
     jabatan: p?.pegawai?.jabatan || "",
-    role: p?.pegawai?.role || "staff",
+    role: p?.pegawai?.role || (isKabidObj(p) ? "kabid" : "staff"),
     tglLahir: p?.pegawai?.tanggal_lahir || "",
     keterangan: p?.pegawai?.nip || "",
   }));
@@ -354,7 +365,8 @@ export const fromApiDetailPerjalanan = (item: any) => {
     nip: mainPeserta?.nip || "",
     pangkat: mainPeserta?.pangkat || "",
     jabatan: mainPeserta?.jabatan || "",
-    role: mainPeserta?.role || "staff",
+    role: kabidItem ? "kabid" : (mainPeserta?.role || "staff"),
+    hasKabid: Boolean(kabidItem),
     pengikut: followers,
     participants: participants,
     kegiatan: source?.kegiatan || "",

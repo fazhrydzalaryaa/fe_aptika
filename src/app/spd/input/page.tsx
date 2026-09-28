@@ -61,10 +61,9 @@ export default function SpdInputPage() {
 
   // ── Modal states for Rekening & Alat Angkutan ─────────
   const [isRekeningModalOpen, setIsRekeningModalOpen] = useState(false);
-  const [rekeningToEdit, setRekeningToEdit] = useState<any | null>(null);
-
   const [isAngkutanModalOpen, setIsAngkutanModalOpen] = useState(false);
-  const [angkutanToEdit, setAngkutanToEdit] = useState<any | null>(null);
+  const [rekeningToEdit, setRekeningToEdit] = useState<any>(null);
+  const [angkutanToEdit, setAngkutanToEdit] = useState<any>(null);
 
   // ── Kalkulasi ─────────────────────────────────────────
   const lamaHari =
@@ -120,9 +119,22 @@ export default function SpdInputPage() {
   }, []);
 
   // ── Handlers Rekening ────────────────────────────────
+  const handleEditRekening = () => {
+    const sel = rekeningOptions.find((r) => r.id === Number(rekeningId));
+    if (!sel) {
+      showToast.error("Silakan pilih kode rekening yang ingin diubah terlebih dahulu!");
+      return;
+    }
+    setRekeningToEdit(sel);
+    setIsRekeningModalOpen(true);
+  };
+
   const handleDeleteRekening = async () => {
-    const sel = rekeningOptions.find((r) => r.id === rekeningId);
-    if (!sel) return;
+    const sel = rekeningOptions.find((r) => r.id === Number(rekeningId));
+    if (!sel) {
+      showToast.error("Silakan pilih kode rekening yang ingin dihapus terlebih dahulu!");
+      return;
+    }
     if (
       !window.confirm(
         `Hapus kode rekening "${sel.kode_rekening} - ${sel.nama_rekening}"?`
@@ -146,6 +158,19 @@ export default function SpdInputPage() {
   };
 
   // ── Handlers Alat Angkutan ───────────────────────────
+  const handleEditAngkutan = () => {
+    const sel = angkutanOptions.find((a: any) =>
+      typeof a === "string" ? a === alatAngkutan : a.nama === alatAngkutan
+    );
+    if (!sel) return;
+    if (typeof sel === "object") {
+      setAngkutanToEdit(sel);
+    } else {
+      setAngkutanToEdit({ nama: sel });
+    }
+    setIsAngkutanModalOpen(true);
+  };
+
   const handleDeleteAngkutan = async () => {
     const sel = angkutanOptions.find((a: any) =>
       typeof a === "string" ? a === alatAngkutan : a.nama === alatAngkutan
@@ -240,18 +265,47 @@ export default function SpdInputPage() {
       const currentList: any[] = Array.isArray(pRes?.data) ? pRes.data : [];
 
       const getOrCreatePegawai = async (row: StaffRow, role: "kabid" | "staff") => {
-        const existing = currentList.find((p) => p.nip === row.nip);
-        if (existing) return existing.id as number;
-        step = `createPegawai(${row.nama})`;
-        const created = await createPegawai({
-          nama: row.nama,
-          nip: row.nip,
-          pangkat: row.pangkat || "Golongan III",
-          jabatan: row.jabatan || (role === "kabid" ? "Kepala Bidang" : "Staf"),
-          tanggal_lahir: "1990-01-01",
-          role,
-        });
-        return (created?.data?.id ?? created?.id) as number;
+        const cleanNip = (row.nip || "").trim();
+        const cleanNama = (row.nama || "").trim();
+
+        const existing = currentList.find(
+          (p) => String(p.nip || "").trim().replace(/\s+/g, "") === cleanNip.replace(/\s+/g, "")
+        );
+        if (existing?.id) return existing.id as number;
+
+        step = `createPegawai(${cleanNama})`;
+        try {
+          const created = await createPegawai({
+            nama: cleanNama,
+            nip: cleanNip,
+            pangkat: row.pangkat || "Golongan III",
+            jabatan: row.jabatan || (role === "kabid" ? "Kepala Bidang" : "Staf"),
+            tanggal_lahir: "1990-01-01",
+            role,
+          });
+          const newObj = created?.data || created;
+          if (newObj && newObj.id) {
+            currentList.push(newObj);
+            return newObj.id as number;
+          }
+          return (newObj?.id ?? created?.id) as number;
+        } catch (err: any) {
+          const errStr = typeof err?.response?.data === "string"
+            ? err.response.data
+            : JSON.stringify(err?.response?.data || err?.message || "");
+
+          if (errStr.includes("already been taken") || errStr.includes("duplicate") || err?.response?.status === 422) {
+            const latestRes = await getPegawaiList();
+            const latestList: any[] = Array.isArray(latestRes?.data) ? latestRes.data : [];
+            const found = latestList.find(
+              (p) => String(p.nip || "").trim().replace(/\s+/g, "") === cleanNip.replace(/\s+/g, "")
+            );
+            if (found?.id) {
+              return found.id as number;
+            }
+          }
+          throw err;
+        }
       };
 
       const participantIds: number[] = [];
@@ -417,9 +471,11 @@ export default function SpdInputPage() {
             </div>
 
             {/* Uang Harian & Rekening & Angkutan */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 1fr", gap: "16px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1.35fr 1.15fr", gap: "16px" }}>
               <div>
-                <label style={label}>Uang Harian (Rp)</label>
+                <div style={{ display: "flex", alignItems: "center", marginBottom: "6px", minHeight: "22px" }}>
+                  <label style={{ ...label, marginBottom: 0, whiteSpace: "nowrap" }}>Uang Harian (Rp)</label>
+                </div>
                 <input
                   style={input}
                   type="number"
@@ -430,20 +486,14 @@ export default function SpdInputPage() {
                 />
               </div>
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                  <label style={{ ...label, marginBottom: 0 }}>Kode Rekening</label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", minHeight: "22px" }}>
+                  <label style={{ ...label, marginBottom: 0, whiteSpace: "nowrap" }}>Kode Rekening</label>
                   <SpdFieldActionButtons
                     onAdd={() => {
                       setRekeningToEdit(null);
                       setIsRekeningModalOpen(true);
                     }}
-                    onEdit={() => {
-                      const sel = rekeningOptions.find((r) => r.id === rekeningId);
-                      if (sel) {
-                        setRekeningToEdit(sel);
-                        setIsRekeningModalOpen(true);
-                      }
-                    }}
+                    onEdit={handleEditRekening}
                     onDelete={handleDeleteRekening}
                     hasSelection={Boolean(rekeningId)}
                   />
@@ -462,22 +512,14 @@ export default function SpdInputPage() {
                 </select>
               </div>
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                  <label style={{ ...label, marginBottom: 0 }}>Alat Angkutan</label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", minHeight: "22px" }}>
+                  <label style={{ ...label, marginBottom: 0, whiteSpace: "nowrap" }}>Alat Angkutan</label>
                   <SpdFieldActionButtons
                     onAdd={() => {
                       setAngkutanToEdit(null);
                       setIsAngkutanModalOpen(true);
                     }}
-                    onEdit={() => {
-                      const sel = angkutanOptions.find((a: any) =>
-                        typeof a === "string" ? a === alatAngkutan : a.nama === alatAngkutan
-                      );
-                      if (sel) {
-                        setAngkutanToEdit(typeof sel === "object" ? sel : { nama: sel });
-                        setIsAngkutanModalOpen(true);
-                      }
-                    }}
+                    onEdit={handleEditAngkutan}
                     onDelete={handleDeleteAngkutan}
                     hasSelection={Boolean(alatAngkutan)}
                   />
@@ -735,7 +777,7 @@ export default function SpdInputPage() {
         </div>
       </div>
 
-      {/* Modal CRUD Rekening */}
+      {/* Modal Tambah / Ubah Rekening */}
       <RekeningModal
         isOpen={isRekeningModalOpen}
         onClose={() => {
@@ -751,7 +793,7 @@ export default function SpdInputPage() {
         }}
       />
 
-      {/* Modal CRUD Alat Angkutan */}
+      {/* Modal Tambah / Ubah Alat Angkutan */}
       <AlatAngkutanModal
         isOpen={isAngkutanModalOpen}
         onClose={() => {

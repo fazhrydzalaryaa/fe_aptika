@@ -9,9 +9,9 @@ import {
   updateAlatAngkutan,
 } from "@/services/api";
 import { showToast } from "@/components/ui/Toast";
-import { Loader2, Plus, Edit2, Trash2 } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2 } from "lucide-react";
 
-// ─── REKENING MODAL ──────────────────────────────────────
+// ─── REKENING MODAL (TAMBAH / UBAH) ───────────────────────
 interface RekeningModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -66,7 +66,7 @@ export function RekeningModal({
           nama_rekening: nama.trim(),
         });
         showToast.success("Kode rekening berhasil diperbarui!");
-        onSuccess(res?.data || { id: initialData.id, kode_rekening: kode, nomor_rekening: nomor, nama_rekening: nama });
+        onSuccess(res?.data || { id: initialData.id, kode_rekening: kode.trim(), nomor_rekening: nomor.trim(), nama_rekening: nama.trim() });
       } else {
         const res = await createRekening({
           kode_rekening: kode.trim(),
@@ -78,7 +78,8 @@ export function RekeningModal({
       }
       onClose();
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || "Gagal menyimpan rekening";
+      const msg =
+        err?.response?.data?.message || err?.message || "Gagal menyimpan rekening";
       showToast.error(msg);
     } finally {
       setLoading(false);
@@ -203,7 +204,7 @@ export function RekeningModal({
   );
 }
 
-// ─── ALAT ANGKUTAN MODAL ─────────────────────────────────
+// ─── ALAT ANGKUTAN MODAL (TAMBAH / UBAH) ───────────────────
 interface AlatAngkutanModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -264,7 +265,8 @@ export function AlatAngkutanModal({
       }
       onClose();
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || "Gagal menyimpan alat angkutan";
+      const msg =
+        err?.response?.data?.message || err?.message || "Gagal menyimpan alat angkutan";
       showToast.error(msg);
     } finally {
       setLoading(false);
@@ -328,7 +330,7 @@ export function AlatAngkutanModal({
           </label>
           <input
             type="text"
-            placeholder="Contoh: Kendaraan Dinas, Kereta Cepat Whoosh, dll"
+            placeholder="Contoh: Kereta Cepat Whoosh, Kendaraan Dinas, dll"
             value={nama}
             onChange={(e) => setNama(e.target.value)}
             style={{
@@ -349,7 +351,7 @@ export function AlatAngkutanModal({
           </label>
           <input
             type="text"
-            placeholder="Contoh: Operasional kendaraan dinas roda empat"
+            placeholder="Contoh: Transportasi darat cepat"
             value={deskripsi}
             onChange={(e) => setDeskripsi(e.target.value)}
             style={{
@@ -367,7 +369,7 @@ export function AlatAngkutanModal({
   );
 }
 
-// ─── ACTION BUTTONS HELPER ───────────────────────────────
+// ─── ACTION BUTTONS HELPER (PRESISI & RAPI - ICON ONLY) ───
 export function SpdFieldActionButtons({
   onAdd,
   onEdit,
@@ -375,12 +377,20 @@ export function SpdFieldActionButtons({
   hasSelection,
 }: {
   onAdd: () => void;
-  onEdit: () => void;
+  onEdit?: () => void;
   onDelete: () => void;
-  hasSelection: boolean;
+  hasSelection?: boolean;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "4px",
+        flexShrink: 0,
+        whiteSpace: "nowrap",
+      }}
+    >
       <button
         type="button"
         onClick={onAdd}
@@ -388,11 +398,11 @@ export function SpdFieldActionButtons({
         style={{
           display: "inline-flex",
           alignItems: "center",
-          gap: "3px",
-          padding: "2px 7px",
-          borderRadius: "6px",
-          fontSize: "11px",
-          fontWeight: 600,
+          justifyContent: "center",
+          width: "22px",
+          height: "22px",
+          padding: 0,
+          borderRadius: "5px",
           color: "#2563eb",
           backgroundColor: "#eff6ff",
           border: "1px solid #bfdbfe",
@@ -400,59 +410,57 @@ export function SpdFieldActionButtons({
           transition: "all 0.15s ease",
         }}
       >
-        <Plus size={11} strokeWidth={2.5} />
-        Tambah
+        <Plus size={12} strokeWidth={2.5} />
       </button>
 
-      {hasSelection && (
-        <>
-          <button
-            type="button"
-            onClick={onEdit}
-            title="Ubah Data Terpilih"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "3px",
-              padding: "2px 7px",
-              borderRadius: "6px",
-              fontSize: "11px",
-              fontWeight: 600,
-              color: "#b45309",
-              backgroundColor: "#fef3c7",
-              border: "1px solid #fde68a",
-              cursor: "pointer",
-              transition: "all 0.15s ease",
-            }}
-          >
-            <Edit2 size={11} strokeWidth={2.5} />
-            Ubah
-          </button>
-
-          <button
-            type="button"
-            onClick={onDelete}
-            title="Hapus Data Terpilih"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "3px",
-              padding: "2px 7px",
-              borderRadius: "6px",
-              fontSize: "11px",
-              fontWeight: 600,
-              color: "#dc2626",
-              backgroundColor: "#fef2f2",
-              border: "1px solid #fecaca",
-              cursor: "pointer",
-              transition: "all 0.15s ease",
-            }}
-          >
-            <Trash2 size={11} strokeWidth={2.5} />
-            Hapus
-          </button>
-        </>
+      {onEdit && (
+        <button
+          type="button"
+          onClick={onEdit}
+          title="Ubah Data Terpilih"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "22px",
+            height: "22px",
+            padding: 0,
+            borderRadius: "5px",
+            color: hasSelection ? "#b45309" : "#94a3b8",
+            backgroundColor: hasSelection ? "#fef3c7" : "#f8fafc",
+            border: hasSelection ? "1px solid #fde68a" : "1px solid #e2e8f0",
+            cursor: "pointer",
+            transition: "all 0.15s ease",
+            opacity: hasSelection ? 1 : 0.75,
+          }}
+        >
+          <Pencil size={12} strokeWidth={2.5} />
+        </button>
       )}
+
+      <button
+        type="button"
+        onClick={onDelete}
+        title="Hapus Data Terpilih"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "22px",
+          height: "22px",
+          padding: 0,
+          borderRadius: "5px",
+          color: hasSelection ? "#dc2626" : "#94a3b8",
+          backgroundColor: hasSelection ? "#fef2f2" : "#f8fafc",
+          border: hasSelection ? "1px solid #fecaca" : "1px solid #e2e8f0",
+          cursor: "pointer",
+          transition: "all 0.15s ease",
+          opacity: hasSelection ? 1 : 0.75,
+        }}
+      >
+        <Trash2 size={12} strokeWidth={2.5} />
+      </button>
     </div>
   );
 }
+

@@ -69,11 +69,10 @@ export default function SpdEditPage({ params }: EditPageProps) {
 
   // ── Modal states for Rekening & Alat Angkutan ─────────
   const [isRekeningModalOpen, setIsRekeningModalOpen] = useState(false);
-  const [rekeningToEdit, setRekeningToEdit] = useState<any | null>(null);
-
   const [isAngkutanModalOpen, setIsAngkutanModalOpen] = useState(false);
-  const [angkutanToEdit, setAngkutanToEdit] = useState<any | null>(null);
-  
+  const [rekeningToEdit, setRekeningToEdit] = useState<any>(null);
+  const [angkutanToEdit, setAngkutanToEdit] = useState<any>(null);
+
   // ── Store original detail ID for updates ───────────────
   const [detailId, setDetailId] = useState<number | null>(null);
 
@@ -155,29 +154,35 @@ export default function SpdEditPage({ params }: EditPageProps) {
           // Parse peserta data
           const pesertaList = data.raw?.peserta || [];
           
-          // Kabid adalah peserta pertama (jika ada dan role-nya kabid)
-          if (pesertaList.length > 0) {
-            const firstPeserta = pesertaList[0]?.pegawai || {};
-            if (firstPeserta.nama) {
-              setIncludeKabid(true);
-              setKabid({
-                nama: firstPeserta.nama || "",
-                nip: firstPeserta.nip || "",
-                pangkat: firstPeserta.pangkat || "",
-                jabatan: firstPeserta.jabatan || "",
-              });
-            }
+          const isKabidObj = (p: any) =>
+            p?.pegawai?.role === "kabid" ||
+            /kepala\s+bidang/i.test(p?.pegawai?.jabatan || "") ||
+            /kabid/i.test(p?.pegawai?.jabatan || "");
+
+          const kabidObj = pesertaList.find((p: any) => isKabidObj(p));
+          const staffObjList = pesertaList.filter((p: any) => !isKabidObj(p));
+
+          if (kabidObj?.pegawai?.nama) {
+            setIncludeKabid(true);
+            setKabid({
+              nama: kabidObj.pegawai.nama || "",
+              nip: kabidObj.pegawai.nip || "",
+              pangkat: kabidObj.pegawai.pangkat || "",
+              jabatan: kabidObj.pegawai.jabatan || "",
+            });
+          } else {
+            setIncludeKabid(false);
+            setKabid(emptyStaff());
           }
 
-          // Staff adalah peserta ke-2 dan seterusnya
-          if (pesertaList.length > 1) {
-            const staffItems = pesertaList.slice(1).map((p: any) => ({
+          if (staffObjList.length > 0) {
+            const staffItems = staffObjList.map((p: any) => ({
               nama: p?.pegawai?.nama || "",
               nip: p?.pegawai?.nip || "",
               pangkat: p?.pegawai?.pangkat || "",
               jabatan: p?.pegawai?.jabatan || "",
             }));
-            setStaffList(staffItems.length > 0 ? staffItems : [emptyStaff()]);
+            setStaffList(staffItems);
           } else {
             setStaffList([emptyStaff()]);
           }
@@ -204,9 +209,22 @@ export default function SpdEditPage({ params }: EditPageProps) {
     }
   };
 
+  const handleEditRekening = () => {
+    const sel = rekeningOptions.find((r) => r.id === Number(rekeningId));
+    if (!sel) {
+      showToast.error("Silakan pilih kode rekening yang ingin diubah terlebih dahulu!");
+      return;
+    }
+    setRekeningToEdit(sel);
+    setIsRekeningModalOpen(true);
+  };
+
   const handleDeleteRekening = async () => {
-    const sel = rekeningOptions.find((r) => r.id === rekeningId);
-    if (!sel) return;
+    const sel = rekeningOptions.find((r) => r.id === Number(rekeningId));
+    if (!sel) {
+      showToast.error("Silakan pilih kode rekening yang ingin dihapus terlebih dahulu!");
+      return;
+    }
     if (
       !window.confirm(
         `Hapus kode rekening "${sel.kode_rekening} - ${sel.nama_rekening}"?`
@@ -239,6 +257,19 @@ export default function SpdEditPage({ params }: EditPageProps) {
     } catch {
       // fallback
     }
+  };
+
+  const handleEditAngkutan = () => {
+    const sel = angkutanOptions.find((a: any) =>
+      typeof a === "string" ? a === alatAngkutan : a.nama === alatAngkutan
+    );
+    if (!sel) return;
+    if (typeof sel === "object") {
+      setAngkutanToEdit(sel);
+    } else {
+      setAngkutanToEdit({ nama: sel });
+    }
+    setIsAngkutanModalOpen(true);
   };
 
   const handleDeleteAngkutan = async () => {
@@ -354,17 +385,46 @@ export default function SpdEditPage({ params }: EditPageProps) {
       const currentList: any[] = Array.isArray(pRes?.data) ? pRes.data : [];
 
       const getOrCreatePegawai = async (row: StaffRow, role: "kabid" | "staff") => {
-        const existing = currentList.find((p) => p.nip === row.nip);
-        if (existing) return existing.id as number;
-        const created = await createPegawai({
-          nama: row.nama,
-          nip: row.nip,
-          pangkat: row.pangkat || "Golongan III",
-          jabatan: row.jabatan || (role === "kabid" ? "Kepala Bidang" : "Staf"),
-          tanggal_lahir: "1990-01-01",
-          role,
-        });
-        return (created?.data?.id ?? created?.id) as number;
+        const cleanNip = (row.nip || "").trim();
+        const cleanNama = (row.nama || "").trim();
+
+        const existing = currentList.find(
+          (p) => String(p.nip || "").trim().replace(/\s+/g, "") === cleanNip.replace(/\s+/g, "")
+        );
+        if (existing?.id) return existing.id as number;
+
+        try {
+          const created = await createPegawai({
+            nama: cleanNama,
+            nip: cleanNip,
+            pangkat: row.pangkat || "Golongan III",
+            jabatan: row.jabatan || (role === "kabid" ? "Kepala Bidang" : "Staf"),
+            tanggal_lahir: "1990-01-01",
+            role,
+          });
+          const newObj = created?.data || created;
+          if (newObj && newObj.id) {
+            currentList.push(newObj);
+            return newObj.id as number;
+          }
+          return (newObj?.id ?? created?.id) as number;
+        } catch (err: any) {
+          const errStr = typeof err?.response?.data === "string"
+            ? err.response.data
+            : JSON.stringify(err?.response?.data || err?.message || "");
+
+          if (errStr.includes("already been taken") || errStr.includes("duplicate") || err?.response?.status === 422) {
+            const latestRes = await getPegawaiList();
+            const latestList: any[] = Array.isArray(latestRes?.data) ? latestRes.data : [];
+            const found = latestList.find(
+              (p) => String(p.nip || "").trim().replace(/\s+/g, "") === cleanNip.replace(/\s+/g, "")
+            );
+            if (found?.id) {
+              return found.id as number;
+            }
+          }
+          throw err;
+        }
       };
 
       const participantIds: number[] = [];
@@ -510,9 +570,11 @@ export default function SpdEditPage({ params }: EditPageProps) {
             </div>
 
             {/* Uang Harian & Rekening & Angkutan */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 1fr", gap: "16px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1.35fr 1.15fr", gap: "16px" }}>
               <div>
-                <label style={label}>Uang Harian (Rp)</label>
+                <div style={{ display: "flex", alignItems: "center", marginBottom: "6px", minHeight: "22px" }}>
+                  <label style={{ ...label, marginBottom: 0, whiteSpace: "nowrap" }}>Uang Harian (Rp)</label>
+                </div>
                 <input
                   style={input}
                   type="number"
@@ -523,20 +585,14 @@ export default function SpdEditPage({ params }: EditPageProps) {
                 />
               </div>
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                  <label style={{ ...label, marginBottom: 0 }}>Kode Rekening</label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", minHeight: "22px" }}>
+                  <label style={{ ...label, marginBottom: 0, whiteSpace: "nowrap" }}>Kode Rekening</label>
                   <SpdFieldActionButtons
                     onAdd={() => {
                       setRekeningToEdit(null);
                       setIsRekeningModalOpen(true);
                     }}
-                    onEdit={() => {
-                      const sel = rekeningOptions.find((r) => r.id === rekeningId);
-                      if (sel) {
-                        setRekeningToEdit(sel);
-                        setIsRekeningModalOpen(true);
-                      }
-                    }}
+                    onEdit={handleEditRekening}
                     onDelete={handleDeleteRekening}
                     hasSelection={Boolean(rekeningId)}
                   />
@@ -555,22 +611,14 @@ export default function SpdEditPage({ params }: EditPageProps) {
                 </select>
               </div>
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                  <label style={{ ...label, marginBottom: 0 }}>Alat Angkutan</label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", minHeight: "22px" }}>
+                  <label style={{ ...label, marginBottom: 0, whiteSpace: "nowrap" }}>Alat Angkutan</label>
                   <SpdFieldActionButtons
                     onAdd={() => {
                       setAngkutanToEdit(null);
                       setIsAngkutanModalOpen(true);
                     }}
-                    onEdit={() => {
-                      const sel = angkutanOptions.find((a: any) =>
-                        typeof a === "string" ? a === alatAngkutan : a.nama === alatAngkutan
-                      );
-                      if (sel) {
-                        setAngkutanToEdit(typeof sel === "object" ? sel : { nama: sel });
-                        setIsAngkutanModalOpen(true);
-                      }
-                    }}
+                    onEdit={handleEditAngkutan}
                     onDelete={handleDeleteAngkutan}
                     hasSelection={Boolean(alatAngkutan)}
                   />
@@ -828,7 +876,7 @@ export default function SpdEditPage({ params }: EditPageProps) {
         </div>
       </div>
 
-      {/* Modal CRUD Rekening */}
+      {/* Modal Tambah / Ubah Rekening */}
       <RekeningModal
         isOpen={isRekeningModalOpen}
         onClose={() => {
@@ -844,7 +892,7 @@ export default function SpdEditPage({ params }: EditPageProps) {
         }}
       />
 
-      {/* Modal CRUD Alat Angkutan */}
+      {/* Modal Tambah / Ubah Alat Angkutan */}
       <AlatAngkutanModal
         isOpen={isAngkutanModalOpen}
         onClose={() => {
