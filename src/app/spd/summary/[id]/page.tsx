@@ -57,12 +57,12 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
   const lamaHari =
     data?.tglMulai && data?.tglSelesai
       ? Math.max(
-          1,
-          Math.ceil(
-            (new Date(data.tglSelesai).getTime() - new Date(data.tglMulai).getTime()) /
-              86400000
-          ) + 1
-        )
+        1,
+        Math.ceil(
+          (new Date(data.tglSelesai).getTime() - new Date(data.tglMulai).getTime()) /
+          86400000
+        ) + 1
+      )
       : 0;
 
   // Parse peserta to get kabid and staff counts
@@ -78,7 +78,7 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
 
   const kabidCount = foundKabid ? 1 : 0;
   const staffCount = foundStaff.length;
-  
+
   // Calculate total cost
   const uangHarian = data?.raw?.uang_harian || 0;
   const totalBiaya = lamaHari * uangHarian * (kabidCount + staffCount);
@@ -135,7 +135,7 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
               <div style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>{lamaHari} Hari</div>
             </div>
           </div>
-          
+
           <div style={{ borderTop: "1px solid #f1f5f9", margin: "0 -20px 20px -20px" }}></div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "20px" }}>
@@ -197,7 +197,7 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
               <div style={{ backgroundColor: "#dc2626", color: "white", width: "24px", height: "24px", borderRadius: "4px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
               </div>
-              <span style={{ fontSize: "13px", fontWeight: "700", color: "#b91c1c", letterSpacing: "0.5px" }}>KEPALA BIDANG<br/>(KABID)</span>
+              <span style={{ fontSize: "13px", fontWeight: "700", color: "#b91c1c", letterSpacing: "0.5px" }}>KEPALA BIDANG<br />(KABID)</span>
             </div>
             <div style={{ padding: "20px" }}>
               <div style={{ marginBottom: "16px" }}>
@@ -293,7 +293,7 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
               <div style={{ fontSize: "18px", fontWeight: "800", color: "#0f2540" }}>{lamaHari} Hari</div>
             </div>
           </div>
-          
+
           <div style={{ borderTop: "1px solid #f1f5f9", margin: "20px 0", paddingTop: "20px" }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "16px" }}>
               <div>
@@ -346,15 +346,15 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
           CETAK SP
         </button>
-        {/* Tombol CETAK VISUM — dinonaktifkan sementara, uncomment untuk mengaktifkan kembali
-        <button
-          onClick={() => router.push(`/spd/visum-form/${id}`)}
-          style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 20px", backgroundColor: "#b91c1c", border: "none", borderRadius: "6px", color: "white", fontWeight: "600", fontSize: "14px", cursor: "pointer", boxShadow: "0 4px 6px -1px rgba(220, 38, 38, 0.2)" }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-          CETAK VISUM
-        </button>
-        */}
+        {
+          <button
+            onClick={() => router.push(`/spd/visum-form/${id}`)}
+            style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 20px", backgroundColor: "#b91c1c", border: "none", borderRadius: "6px", color: "white", fontWeight: "600", fontSize: "14px", cursor: "pointer", boxShadow: "0 4px 6px -1px rgba(220, 38, 38, 0.2)" }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            CETAK VISUM
+          </button>
+        }
       </div>
     </div>
   );
