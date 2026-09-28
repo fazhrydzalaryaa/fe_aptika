@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import React, { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { getSpdById, fromApiSpdItem, getDetailPerjalananById, fromApiDetailPerjalanan } from "@/services/api";
 
@@ -102,24 +102,40 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
     return <div style={{ padding: "40px", textAlign: "center" }}>Loading dokumen...</div>;
   }
 
-  // Build full peserta list: main + pengikut
-  const allPeserta = data?.participants && data.participants.length > 0
-    ? data.participants
-    : [
-        { 
-          nama: data?.nama, 
-          nip: data?.nip, 
-          pangkat: data?.pangkat, 
-          jabatan: data?.jabatan, 
-          role: data?.role || "staff", 
-          nomorSpd: data?.noSpd || "" 
-        },
-        ...(data?.pengikut || []).map((p: any) => ({ 
-          ...p, 
-          role: p.role || "staff", 
-          nomorSpd: p.nomorSpd || "" 
-        }))
-      ];
+  // Build full peserta list dari raw.peserta (sudah diorder by id di backend)
+  // Sehingga peserta baru yang ditambahkan/diupdate akan selalu muncul
+  const rawPesertaList: any[] = Array.isArray(data?.raw?.peserta)
+    ? data.raw.peserta
+    : [];
+
+  const allPeserta = rawPesertaList.length > 0
+    ? rawPesertaList.map((p: any) => ({
+        nama: p?.pegawai?.nama || "",
+        nip: p?.pegawai?.nip || "",
+        pangkat: p?.pegawai?.pangkat || "",
+        jabatan: p?.pegawai?.jabatan || "",
+        role: p?.pegawai?.role || "staff",
+        nomorSpd: p?.nomor_spd || "",
+        tglLahir: p?.pegawai?.tanggal_lahir || "",
+        keterangan: p?.pegawai?.nip || "",
+      }))
+    : data?.participants && data.participants.length > 0
+      ? data.participants
+      : [
+          {
+            nama: data?.nama,
+            nip: data?.nip,
+            pangkat: data?.pangkat,
+            jabatan: data?.jabatan,
+            role: data?.role || "staff",
+            nomorSpd: data?.noSpd || "",
+          },
+          ...(data?.pengikut || []).map((p: any) => ({
+            ...p,
+            role: p.role || "staff",
+            nomorSpd: p.nomorSpd || "",
+          })),
+        ];
 
   // Detect Kabid
   const isKabid = (p: any) =>
@@ -878,50 +894,56 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
         );
       })() : (() => {
         /* ======================== SURAT PERJALANAN DINAS (SPD) ======================== */
-        if (hasKabid) {
-          const kabidPerson = kabidList[0];
-          const firstStaff = staffList[0];
-          const otherStaff = staffList.slice(1);
+        // Setiap peserta mendapat dokumen SPD sendiri:
+        // - Kabid → SPD ditandatangani Sekretaris
+        // - Setiap Staff → SPD ditandatangani Kabid (atau PPK default)
+        // Dengan 1 Kabid + 3 Staff = 4 dokumen SPD terpisah
 
-          return (
-            <>
-              {/* SPD 1: Kabid – ditandatangani Sekretaris */}
-              {renderSpdDoc(
-                kabidPerson,
-                [],
-                kabidPerson?.nomorSpd || data?.noSpd || "",
-                "Sekretaris Dinas Komunikasi dan Informatika Provinsi Jawa Barat",
-                data?.raw?.secretary_name || "AGI AGUNG GALUH PURWA, S.STP., M.Sc., MPA.",
-                data?.raw?.secretary_nip || "197507221999031004"
-              )}
+        const signerKabid = hasKabid ? kabidList[0] : null;
+        const staffSignerName = signerKabid?.nama || data?.raw?.orderer_name || "Dr. Ir. G.P. Ginanjar, M.T.";
+        const staffSignerNip  = signerKabid?.nip  || data?.raw?.orderer_nip  || "197412081999031002";
 
-              {/* Page Break */}
-              {staffList.length > 0 && <div className="page-break"></div>}
+        return (
+          <>
+            {/* SPD untuk Kabid (jika ada) – ditandatangani Sekretaris */}
+            {hasKabid && renderSpdDoc(
+              kabidList[0],
+              [],  // Kabid tidak punya pengikut
+              kabidList[0]?.nomorSpd || data?.noSpd || "",
+              "Sekretaris Dinas Komunikasi dan Informatika Provinsi Jawa Barat",
+              data?.raw?.secretary_name || "AGI AGUNG GALUH PURWA, S.STP., M.Sc., MPA.",
+              data?.raw?.secretary_nip  || "197507221999031004"
+            )}
 
-              {/* SPD 2: Staff – ditandatangani Kabid */}
-              {staffList.length > 0 && renderSpdDoc(
-                firstStaff,
-                otherStaff,
-                firstStaff?.nomorSpd || data?.noSpd || "",
-                "Kepala Bidang Aplikasi dan Informatika",
-                kabidPerson?.nama || data?.raw?.orderer_name || "Dr. Ir. G.P. Ginanjar, M.T.",
-                kabidPerson?.nip || data?.raw?.orderer_nip || "197412081999031002"
-              )}
-            </>
-          );
-        }
+            {/* SPD individual untuk setiap Staff – masing-masing 1 halaman */}
+            {staffList.map((staff: any, idx: number) => (
+              <React.Fragment key={idx}>
+                {/* Page break sebelum setiap dokumen (Kabid sudah di atas, atau antar staff) */}
+                {(hasKabid || idx > 0) && <div className="page-break"></div>}
 
-        // No Kabid: Single SPD (Staff only or default)
-        const firstPerson = staffList[0] || allPeserta[0] || data;
-        const otherPeople = staffList.slice(1) || allPeserta.slice(1) || [];
+                {renderSpdDoc(
+                  staff,
+                  [],  // Setiap staff punya dokumen sendiri, tidak ada pengikut
+                  staff?.nomorSpd || data?.noSpd || "",
+                  hasKabid
+                    ? "Kepala Bidang Aplikasi dan Informatika"
+                    : (data?.pejabatPemberi || "Kepala Bidang APTIKA Diskominfo Jabar"),
+                  staffSignerName,
+                  staffSignerNip
+                )}
+              </React.Fragment>
+            ))}
 
-        return renderSpdDoc(
-          firstPerson,
-          otherPeople,
-          firstPerson?.nomorSpd || data?.noSpd || "",
-          data?.pejabatPemberi || "Kepala Bidang APTIKA Diskominfo Jabar",
-          data?.raw?.orderer_name || "Dr. Ir. G.P. Ginanjar, M.T.",
-          data?.raw?.orderer_nip || "197412081999031002"
+            {/* Fallback jika tidak ada kabid dan tidak ada staff */}
+            {!hasKabid && staffList.length === 0 && renderSpdDoc(
+              allPeserta[0],
+              allPeserta.slice(1),
+              data?.noSpd || "",
+              data?.pejabatPemberi || "Kepala Bidang APTIKA Diskominfo Jabar",
+              data?.raw?.orderer_name || "Dr. Ir. G.P. Ginanjar, M.T.",
+              data?.raw?.orderer_nip  || "197412081999031002"
+            )}
+          </>
         );
       })()}
     </>
