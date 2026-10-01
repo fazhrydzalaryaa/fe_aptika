@@ -399,12 +399,22 @@ export const deleteDetailPerjalanan = async (id: number) => {
 };
 
 export const getPegawaiList = async () => {
-  const res = await api.get("/spd/pegawai");
+  const res = await api.get("/master/pegawai");
   return res.data;
 };
 
 export const createPegawai = async (payload: any) => {
-  const res = await api.post("/spd/pegawai", payload);
+  const res = await api.post("/master/pegawai", payload);
+  return res.data;
+};
+
+export const updatePegawai = async (id: number, payload: any) => {
+  const res = await api.put(`/master/pegawai/${id}`, payload);
+  return res.data;
+};
+
+export const deletePegawai = async (id: number) => {
+  const res = await api.delete(`/master/pegawai/${id}`);
   return res.data;
 };
 
@@ -414,7 +424,7 @@ export const createSpdPeserta = async (payload: { detail_perjalanan_id: number; 
 };
 
 export const getRekeningList = async () => {
-  const res = await api.get("/spd/rekening");
+  const res = await api.get("/master/rekening");
   return res.data;
 };
 
@@ -423,7 +433,7 @@ export const createRekening = async (payload: {
   nomor_rekening: string;
   nama_rekening: string;
 }) => {
-  const res = await api.post("/spd/rekening", payload);
+  const res = await api.post("/master/rekening", payload);
   return res.data;
 };
 
@@ -435,17 +445,17 @@ export const updateRekening = async (
     nama_rekening: string;
   }
 ) => {
-  const res = await api.put(`/spd/rekening/${id}`, payload);
+  const res = await api.put(`/master/rekening/${id}`, payload);
   return res.data;
 };
 
 export const deleteRekening = async (id: number) => {
-  const res = await api.delete(`/spd/rekening/${id}`);
+  const res = await api.delete(`/master/rekening/${id}`);
   return res.data;
 };
 
 export const getAlatAngkutanList = async () => {
-  const res = await api.get("/spd/alat-angkutan");
+  const res = await api.get("/master/alat-angkutan");
   return res.data;
 };
 
@@ -453,7 +463,7 @@ export const createAlatAngkutan = async (payload: {
   nama: string;
   deskripsi?: string;
 }) => {
-  const res = await api.post("/spd/alat-angkutan", payload);
+  const res = await api.post("/master/alat-angkutan", payload);
   return res.data;
 };
 
@@ -464,12 +474,52 @@ export const updateAlatAngkutan = async (
     deskripsi?: string;
   }
 ) => {
-  const res = await api.put(`/spd/alat-angkutan/${id}`, payload);
+  const res = await api.put(`/master/alat-angkutan/${id}`, payload);
   return res.data;
 };
 
 export const deleteAlatAngkutan = async (id: number) => {
-  const res = await api.delete(`/spd/alat-angkutan/${id}`);
+  const res = await api.delete(`/master/alat-angkutan/${id}`);
+  return res.data;
+};
+
+// ─── MASTER NDA ──────────────────────────────────────────
+export const getMasterNdaList = async () => {
+  const res = await api.get("/master/nda");
+  return res.data;
+};
+
+export const createMasterNda = async (payload: {
+  judul: string;
+  nama_pihak_pertama: string;
+  nip_pihak_pertama?: string;
+  jabatan_pihak_pertama?: string;
+  instansi_pihak_pertama?: string;
+  klausul_perjanjian?: string;
+  is_active?: boolean;
+}) => {
+  const res = await api.post("/master/nda", payload);
+  return res.data;
+};
+
+export const updateMasterNda = async (
+  id: number,
+  payload: {
+    judul: string;
+    nama_pihak_pertama: string;
+    nip_pihak_pertama?: string;
+    jabatan_pihak_pertama?: string;
+    instansi_pihak_pertama?: string;
+    klausul_perjanjian?: string;
+    is_active?: boolean;
+  }
+) => {
+  const res = await api.put(`/master/nda/${id}`, payload);
+  return res.data;
+};
+
+export const deleteMasterNda = async (id: number) => {
+  const res = await api.delete(`/master/nda/${id}`);
   return res.data;
 };
 

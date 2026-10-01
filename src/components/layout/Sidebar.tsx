@@ -267,13 +267,20 @@ export default function Sidebar() {
           },
         ]
       : []),
+    {
+      type: "single" as const,
+      name: "Data Master",
+      key: "master",
+      icon: Database,
+      iconColor: "text-cyan-600 bg-cyan-50 border border-cyan-200/60",
+    },
   ];
 
   const handleTeamClick = (key: string) => {
     setOpenMobile(false);
     if (key === "dashboard") {
       router.push("/dashboard");
-    } else if (key === "administrasisurat" || key === "manajementugasdigital" || key === "smki" || key === "daftar-aset-ti") {
+    } else if (key === "administrasisurat" || key === "manajementugasdigital" || key === "smki" || key === "daftar-aset-ti" || key === "master") {
       router.push(`/${key}`);
     } else if (key.includes("/")) {
       router.push(`/${key}`);
@@ -558,4 +565,4 @@ export default function Sidebar() {
       </aside>
     </>
   );
-}
+}
