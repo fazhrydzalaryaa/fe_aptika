@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/services/api";
+import { useAuthStore } from "@/store/useAuthStore";
 
 
 
@@ -41,14 +42,19 @@ export default function LoginPage() {
 
     try {
       const data = await login(email, password);
-      // Mendukung format token umum dari Laravel Sanctum (access_token atau token)
-      const token = data.token || data.access_token || data?.data?.token || data?.data?.access_token || "dummy-token-aptika";
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(data.user || data?.data?.user || { name: "User APTIKA Tools" }));
-      document.cookie = `token=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+      localStorage.setItem("token", data.access_token);
+      if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
+      document.cookie = `token=${data.access_token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+
+      if (!(await useAuthStore.getState().fetchProfile())) {
+        throw new Error("Login berhasil, tetapi profil pengguna tidak dapat diverifikasi.");
+      }
+
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Email atau password salah.");
+      setError(
+        err.response?.data?.message || err.message || "Email atau password salah."
+      );
     } finally {
       setLoading(false);
     }

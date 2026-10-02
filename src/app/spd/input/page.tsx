@@ -23,9 +23,6 @@ type StaffRow = { nama: string; nip: string; pangkat: string; jabatan: string };
 
 const emptyStaff = (): StaffRow => ({ nama: "", nip: "", pangkat: "", jabatan: "" });
 
-const formatRupiah = (val: number) =>
-  val ? "Rp " + val.toLocaleString("id-ID") : "";
-
 export default function SpdInputPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -36,10 +33,15 @@ export default function SpdInputPage() {
   const [tujuan, setTujuan] = useState("");
   const [tglBerangkat, setTglBerangkat] = useState("");
   const [tglKembali, setTglKembali] = useState("");
-  const [uangHarian, setUangHarian] = useState<number>(0);
+  const [bidangId, setBidangId] = useState<number | "">("");
   const [rekeningId, setRekeningId] = useState<number | "">("");
   const [alatAngkutan, setAlatAngkutan] = useState("Kendaraan Dinas");
   const [deskripsi, setDeskripsi] = useState("");
+  
+  // ── TAMBAHAN BARU: SP, Visum, dan PPK ─────────────────
+  const [nomorSp, setNomorSp] = useState("");
+  const [nomorVisum, setNomorVisum] = useState("");
+  const [ppkId, setPpkId] = useState<number | "">("");
 
   // ── [2] KABID (opsional, hanya 1) ────────────────────
   const [includeKabid, setIncludeKabid] = useState(false);
@@ -49,6 +51,7 @@ export default function SpdInputPage() {
   const [staffList, setStaffList] = useState<StaffRow[]>([emptyStaff()]);
 
   // ── Data dari API ─────────────────────────────────────
+  const [bidangOptions, setBidangOptions] = useState<any[]>([]);
   const [rekeningOptions, setRekeningOptions] = useState<any[]>([]);
   const [pegawaiOptions, setPegawaiOptions] = useState<any[]>([]);
   const [angkutanOptions, setAngkutanOptions] = useState<any[]>([
@@ -65,7 +68,7 @@ export default function SpdInputPage() {
   const [rekeningToEdit, setRekeningToEdit] = useState<any>(null);
   const [angkutanToEdit, setAngkutanToEdit] = useState<any>(null);
 
-  // ── Kalkulasi ─────────────────────────────────────────
+  // ── Kalkulasi Durasi ──────────────────────────────────
   const lamaHari =
     tglBerangkat && tglKembali
       ? Math.max(
@@ -77,12 +80,9 @@ export default function SpdInputPage() {
         )
       : 0;
 
-  const totalKabid = includeKabid && lamaHari ? lamaHari * uangHarian : 0;
   const validStaff = staffList.filter((s) => s.nama.trim());
-  const totalStaff = validStaff.length * lamaHari * uangHarian;
-  const grandTotal = totalKabid + totalStaff;
 
-  // ── Fetch data rekening, pegawai, angkutan ───────────
+  // ── Fetch data bidang, rekening, pegawai, angkutan ────
   const fetchRekening = async () => {
     try {
       const rRes = await getRekeningList();
@@ -106,6 +106,20 @@ export default function SpdInputPage() {
   useEffect(() => {
     fetchRekening();
     fetchAngkutan();
+
+    const fetchBidang = async () => {
+      try {
+        // Langsung tembak ke URL backend Laravel secara eksplisit
+        const res = await fetch("http://127.0.0.1:8000/api/bidangs");
+        const json = await res.json();
+        if (json.success) {
+          setBidangOptions(json.data);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data bidang:", error);
+      }
+    };
+    fetchBidang();
 
     const fetchPegawai = async () => {
       try {
@@ -252,6 +266,10 @@ export default function SpdInputPage() {
       showToast.error("Mohon lengkapi data detail perjalanan!");
       return;
     }
+    if (!bidangId) {
+      showToast.error("Pilih bidang terlebih dahulu!");
+      return;
+    }
     if (validS.length < 1) {
       showToast.error("Minimal 1 staff harus diisi!");
       return;
@@ -327,9 +345,13 @@ export default function SpdInputPage() {
         tujuan,
         tanggal_berangkat: tglBerangkat,
         tanggal_kembali: tglKembali,
-        uang_harian: uangHarian,
+        bidang_id: bidangId,
         alat_angkutan: alatAngkutan,
         deskripsi,
+        // Menyertakan data baru ke backend
+        nomor_sp: nomorSp,
+        nomor_visum: nomorVisum,
+        ppk_id: ppkId ? Number(ppkId) : null,
       };
       if (rekeningId) detailPayload.rekening_id = rekeningId;
 
@@ -400,7 +422,6 @@ export default function SpdInputPage() {
   };
   const select: React.CSSProperties = { ...input, cursor: "pointer" };
   const grid2: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" };
-  const grid4: React.CSSProperties = { display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "12px" };
 
   return (
     <div style={{ padding: "24px 32px", maxWidth: "960px", margin: "0 auto", fontFamily: "Inter, sans-serif" }}>
@@ -434,6 +455,28 @@ export default function SpdInputPage() {
           </h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            
+            {/* Nomor SP, Nomor Visum, PPK */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
+              <div>
+                <label style={label}>Nomor SP</label>
+                <input style={input} placeholder="Contoh: 090/123-Aptika" value={nomorSp} onChange={(e) => setNomorSp(e.target.value)} />
+              </div>
+              <div>
+                <label style={label}>Nomor Visum</label>
+                <input style={input} placeholder="Contoh: 094/456-Aptika" value={nomorVisum} onChange={(e) => setNomorVisum(e.target.value)} />
+              </div>
+              <div>
+                <label style={label}>Pejabat Pembuat Komitmen (PPK)</label>
+                <select style={select} value={ppkId} onChange={(e) => setPpkId(e.target.value ? Number(e.target.value) : "")}>
+                  <option value="">— Pilih PPK —</option>
+                  {pegawaiOptions.map((p) => (
+                    <option key={p.id} value={p.id}>{p.nama} - {p.jabatan}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             {/* Kegiatan & Sub Kegiatan */}
             <div style={grid2}>
               <div>
@@ -470,20 +513,25 @@ export default function SpdInputPage() {
               </div>
             </div>
 
-            {/* Uang Harian & Rekening & Angkutan */}
+            {/* Bidang & Rekening & Angkutan */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1.35fr 1.15fr", gap: "16px" }}>
               <div>
                 <div style={{ display: "flex", alignItems: "center", marginBottom: "6px", minHeight: "22px" }}>
-                  <label style={{ ...label, marginBottom: 0, whiteSpace: "nowrap" }}>Uang Harian (Rp)</label>
+                  <label style={{ ...label, marginBottom: 0, whiteSpace: "nowrap" }}>Pilih Bidang <span style={{ color: "red" }}>*</span></label>
                 </div>
-                <input
-                  style={input}
-                  type="number"
-                  min={0}
-                  placeholder="450000"
-                  value={uangHarian || ""}
-                  onChange={(e) => setUangHarian(Number(e.target.value))}
-                />
+                <select
+                  style={select}
+                  value={bidangId}
+                  onChange={(e) => setBidangId(Number(e.target.value))}
+                  required
+                >
+                  <option value="" disabled>— Pilih Bidang —</option>
+                  {bidangOptions.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.code} - {b.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", minHeight: "22px" }}>
@@ -619,12 +667,6 @@ export default function SpdInputPage() {
                   <input style={input} placeholder="Contoh: Kepala Bidang Aptika" value={kabid.jabatan} onChange={(e) => setKabid({ ...kabid, jabatan: e.target.value })} />
                 </div>
               </div>
-              {lamaHari > 0 && uangHarian > 0 && (
-                <div style={{ backgroundColor: "#f5f3ff", border: "1px solid #ddd6fe", borderRadius: "8px", padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "13px", color: "#5b21b6" }}>{lamaHari} hari × {formatRupiah(uangHarian)}</span>
-                  <span style={{ fontSize: "15px", fontWeight: "700", color: "#4c1d95" }}>{formatRupiah(totalKabid)}</span>
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -685,12 +727,6 @@ export default function SpdInputPage() {
                     <input style={input} placeholder="Contoh: Pranata Komputer" value={s.jabatan} onChange={(e) => updateStaff(i, "jabatan", e.target.value)} />
                   </div>
                 </div>
-                {lamaHari > 0 && uangHarian > 0 && (
-                  <div style={{ marginTop: "12px", backgroundColor: "#e0f2fe", borderRadius: "6px", padding: "8px 12px", display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "12px", color: "#0369a1" }}>{lamaHari} hari × {formatRupiah(uangHarian)}</span>
-                    <span style={{ fontSize: "13px", fontWeight: "700", color: "#0c4a6e" }}>{formatRupiah(lamaHari * uangHarian)}</span>
-                  </div>
-                )}
               </div>
             ))}
 
@@ -704,41 +740,6 @@ export default function SpdInputPage() {
             )}
           </div>
         </div>
-
-        {/* ═══════════════════════════════════════════════ */}
-        {/* RINGKASAN TOTAL                               */}
-        {/* ═══════════════════════════════════════════════ */}
-        {lamaHari > 0 && uangHarian > 0 && (
-          <div style={{ backgroundColor: "#0f2540", borderRadius: "12px", padding: "20px 24px", color: "white" }}>
-            <div style={{ fontSize: "13px", opacity: 0.7, marginBottom: "16px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Ringkasan Perhitungan</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", opacity: 0.85 }}>
-                <span>Durasi Perjalanan</span>
-                <span style={{ fontWeight: "600" }}>{lamaHari} hari</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", opacity: 0.85 }}>
-                <span>Uang Harian</span>
-                <span style={{ fontWeight: "600" }}>{formatRupiah(uangHarian)}</span>
-              </div>
-              {includeKabid && kabid.nama && (
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", opacity: 0.85 }}>
-                  <span>Kabid ({kabid.nama || "—"})</span>
-                  <span style={{ fontWeight: "600" }}>{formatRupiah(totalKabid)}</span>
-                </div>
-              )}
-              {validStaff.length > 0 && (
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", opacity: 0.85 }}>
-                  <span>Staff ({validStaff.length} orang)</span>
-                  <span style={{ fontWeight: "600" }}>{formatRupiah(totalStaff)}</span>
-                </div>
-              )}
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.2)", marginTop: "8px", paddingTop: "12px", display: "flex", justifyContent: "space-between", fontSize: "18px", fontWeight: "800" }}>
-                <span>Total Anggaran</span>
-                <span style={{ color: "#7dd3fc" }}>{formatRupiah(grandTotal)}</span>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* ═══════════════════════════════════════════════ */}
         {/* ACTION BUTTONS                                 */}
