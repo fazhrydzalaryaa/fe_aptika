@@ -1965,9 +1965,127 @@ export const exportSmkiLaporanAuditDocx = async (id: number | string) => {
   return res.data;
 };
 
+// ============================================================
+// SMKI: FORMULIR HAK AKSES TI (FR-018)
+// ============================================================
 
+export interface HakAksesMasterItem {
+  id_unit_kerja?: number;
+  id_jenis_permohonan?: number;
+  id_sistem_aplikasi?: number;
+  id_level_akses?: number;
+  id_jenis_akses?: number;
+  nama_unit?: string;
+  nama_jenis?: string;
+  nama_sistem?: string;
+  deskripsi?: string;
+  nama_level?: string;
+  nama_akses?: string;
+}
 
+export interface HakAksesTiItem {
+  id_hak_akses: number;
+  nomor_request: string;
+  nama_pemohon: string;
+  nip_id_pegawai?: string | null;
+  jabatan?: string | null;
+  email?: string | null;
+  kontak_person?: string | null;
+  id_unit_kerja?: number | null;
+  id_jenis_permohonan?: number | null;
+  id_sistem_aplikasi?: number | null;
+  id_level_akses?: number | null;
+  sifat_akses: "Permanen" | "Rutin" | "Sementara" | string;
+  waktu_akses: string;
+  waktu_akses_lainnya?: string | null;
+  masa_berlaku_mulai?: string | null;
+  masa_berlaku_selesai?: string | null;
+  keperluan?: string | null;
+  sistem_lainnya?: string | null;
+  modul_fitur?: string[] | null;
+  persetujuan_ketentuan: boolean;
+  status_permohonan: string;
+  created_at?: string;
+  updated_at?: string;
+  nama_unit_kerja?: string | null;
+  nama_jenis_permohonan?: string | null;
+  nama_sistem?: string | null;
+  nama_level_akses?: string | null;
+  daftar_jenis_akses?: string[];
+  unit_kerja?: HakAksesMasterItem | null;
+  jenis_permohonan?: HakAksesMasterItem | null;
+  sistem_aplikasi?: HakAksesMasterItem | null;
+  level_akses?: HakAksesMasterItem | null;
+  jenis_akses?: HakAksesMasterItem[];
+}
 
+export interface HakAksesTiLookupData {
+  unit_kerjas: HakAksesMasterItem[];
+  jenis_permohonans: HakAksesMasterItem[];
+  sistem_aplikasis: HakAksesMasterItem[];
+  level_akses: HakAksesMasterItem[];
+  jenis_akses: HakAksesMasterItem[];
+  suggested_nomor: string;
+  sifat_akses: string[];
+  waktu_akses: string[];
+  status_permohonan: string[];
+}
+
+export const getHakAksesTiList = async (params?: {
+  search?: string;
+  jenis_permohonan?: string | number;
+  status?: string;
+  sifat_akses?: string;
+  page?: number;
+  per_page?: number;
+}) => {
+  const res = await api.get("/smki/hak-akses-ti", { params });
+  return res.data;
+};
+
+export const getHakAksesTiLookup = async () => {
+  const res = await api.get("/smki/hak-akses-ti/lookup");
+  return res.data;
+};
+
+export const getHakAksesTiDetail = async (id: number | string) => {
+  const res = await api.get(`/smki/hak-akses-ti/${id}`);
+  return res.data;
+};
+
+export const createHakAksesTi = async (payload: Partial<HakAksesTiItem> & { jenis_akses?: number[] }) => {
+  const res = await api.post("/smki/hak-akses-ti", payload);
+  return res.data;
+};
+
+export const updateHakAksesTi = async (
+  id: number | string,
+  payload: Partial<HakAksesTiItem> & { jenis_akses?: number[] }
+) => {
+  const res = await api.put(`/smki/hak-akses-ti/${id}`, payload);
+  return res.data;
+};
+
+export const deleteHakAksesTi = async (id: number | string) => {
+  const res = await api.delete(`/smki/hak-akses-ti/${id}`);
+  return res.data;
+};
+
+export const exportHakAksesTiDocx = async (params?: {
+  id?: number | string;
+  search?: string;
+  status?: string;
+  sifat_akses?: string;
+  no_dokumen?: string;
+  no_revisi?: string;
+  tanggal_berlaku?: string;
+}) => {
+  const res = await api.get("/smki/hak-akses-ti/export-docx", {
+    params,
+    responseType: "blob",
+  });
+  return res.data;
+};
 
 
 

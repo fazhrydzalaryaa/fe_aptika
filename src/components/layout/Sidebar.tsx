@@ -253,6 +253,12 @@ export default function Sidebar() {
                 iconColor: "text-emerald-600 bg-emerald-50 border border-emerald-200/60",
               },
               {
+                name: "Hak Akses TI",
+                key: "smki/hak-akses-ti",
+                icon: ShieldCog,
+                iconColor: "text-cyan-600 bg-cyan-50 border border-cyan-200/60",
+              },
+              {
                 name: "Daftar Aset TI",
                 key: "daftar-aset-ti",
                 icon: Box,
