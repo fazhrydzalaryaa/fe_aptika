@@ -23,6 +23,7 @@ import {
   ShieldAlert,
   Laptop,
   Box,
+  CalendarCheck,
 } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import { useSidebarStore } from "@/store/useSidebarStore";
@@ -262,6 +263,12 @@ export default function Sidebar() {
                 key: "smki/berita-acara",
                 icon: FileText,
                 iconColor: "text-emerald-600 bg-emerald-50 border border-emerald-200/60",
+              },
+              {
+                name: "Rencana Audit",
+                key: "smki/rencana-audit",
+                icon: CalendarCheck,
+                iconColor: "text-teal-600 bg-teal-50 border border-teal-200/60",
               },
             ],
           },
