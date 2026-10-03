@@ -41,9 +41,39 @@ export const getBidangs = async () => {
   return res.data; // expects { success: true, data: [...] }
 };
 
+interface LoginPayload {
+  token?: unknown;
+  access_token?: unknown;
+  user?: Record<string, unknown>;
+  data?: {
+    token?: unknown;
+    access_token?: unknown;
+    user?: Record<string, unknown>;
+  };
+}
+
+export interface LoginResponse {
+  access_token: string;
+  user?: Record<string, unknown>;
+}
+
 export const login = async (email: string, password: string) => {
   const res = await api.post("/login", { email, password });
-  return res.data; // expects { token, user }
+  const payload: LoginPayload = res.data;
+  const token =
+    payload.access_token ??
+    payload.token ??
+    payload.data?.access_token ??
+    payload.data?.token;
+
+  if (typeof token !== "string" || token.trim() === "") {
+    throw new Error("Respons login tidak berisi token autentikasi.");
+  }
+
+  return {
+    access_token: token,
+    user: payload.user ?? payload.data?.user,
+  } satisfies LoginResponse;
 };
 
 export const logout = async () => {
@@ -2381,7 +2411,6 @@ export const exportHakAksesTiDocx = async (id: number | string) => {
   });
   return res.data;
 };
-
 
 
 

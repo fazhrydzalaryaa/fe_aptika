@@ -130,22 +130,14 @@ export default function Home() {
 
     try {
       const data = await login(email, password);
-      const token =
-        data.token ||
-        data.access_token ||
-        data?.data?.token ||
-        data?.data?.access_token ||
-        "dummy-token-aptika";
-      const loggedUser = data.user || data?.data?.user;
-      localStorage.setItem("token", token);
-      localStorage.setItem(
-        "user",
-        JSON.stringify(
-          loggedUser || { name: "User APTIKA Tools" }
-        )
-      );
-      document.cookie = `token=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
-      await useAuthStore.getState().fetchProfile();
+      const loggedUser = data.user;
+      localStorage.setItem("token", data.access_token);
+      if (loggedUser) localStorage.setItem("user", JSON.stringify(loggedUser));
+      document.cookie = `token=${data.access_token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+
+      if (!(await useAuthStore.getState().fetchProfile())) {
+        throw new Error("Login berhasil, tetapi profil pengguna tidak dapat diverifikasi.");
+      }
 
       const authState = useAuthStore.getState();
       const isAdmin = loggedUser?.role === "admin" || authState.user?.role === "admin" || authState.isAdminAptika;
@@ -156,7 +148,9 @@ export default function Home() {
         router.push("/dashboard");
       }
     } catch (err: any) {
-      setLoginError(err.response?.data?.message || "Email atau password salah.");
+      setLoginError(
+        err.response?.data?.message || err.message || "Email atau password salah."
+      );
     } finally {
       setLoginLoading(false);
     }

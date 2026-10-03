@@ -47,17 +47,16 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [docType, setDocType] = useState<"sp" | "spd">("sp");
+  const [spdOrientation, setSpdOrientation] = useState<"landscape" | "portrait">("landscape");
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Coba gunakan API Baru (detail-perjalanan) terlebih dahulu
         const res = await getDetailPerjalananById(Number(id));
         setData(fromApiDetailPerjalanan(res));
       } catch {
         try {
-          // Fallback ke API lama
           const res = await getSpdById(Number(id));
           setData(fromApiSpdItem(res));
         } catch {
@@ -102,8 +101,6 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
     return <div style={{ padding: "40px", textAlign: "center" }}>Loading dokumen...</div>;
   }
 
-  // Build full peserta list dari raw.peserta (sudah diorder by id di backend)
-  // Sehingga peserta baru yang ditambahkan/diupdate akan selalu muncul
   const rawPesertaList: any[] = Array.isArray(data?.raw?.peserta)
     ? data.raw.peserta
     : [];
@@ -137,7 +134,6 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
           })),
         ];
 
-  // Detect Kabid
   const isKabid = (p: any) =>
     p.role === "kabid" ||
     /kepala\s+bidang/i.test(p.jabatan || "") ||
@@ -155,9 +151,23 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
     ppkName: string,
     ppkNip: string
   ) => (
-    <div className="print-container-spd" style={{ display: "flex", gap: "20px" }}>
-      {/* LEFT COLUMN: SPD FRONT */}
-      <div style={{ flex: "1 1 50%", borderRight: "1px dashed #cbd5e1", paddingRight: "15px", display: "flex", flexDirection: "column" }}>
+    <div 
+      className="print-container-spd" 
+      style={{ 
+        display: "flex", 
+        flexDirection: spdOrientation === "landscape" ? "row" : "column", 
+        gap: "20px",
+        maxWidth: spdOrientation === "landscape" ? "1100px" : "800px"
+      }}
+    >
+      {/* LEFT / TOP COLUMN: SPD FRONT */}
+      <div style={{ 
+        flex: spdOrientation === "landscape" ? "1 1 50%" : "1 1 100%", 
+        borderRight: spdOrientation === "landscape" ? "1px dashed #cbd5e1" : "none", 
+        paddingRight: spdOrientation === "landscape" ? "15px" : "0", 
+        display: "flex", 
+        flexDirection: "column" 
+      }}>
         {/* Kop Dinas */}
         <div className="kop-surat-spd">
           <img 
@@ -288,7 +298,7 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
         </table>
 
         {/* Footer Signatures */}
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px", fontSize: "11px" }}>
+        <div className="signature-section" style={{ display: "flex", justifyContent: "space-between", marginTop: "8px", fontSize: "11px" }}>
           <div></div>
           <div style={{ width: "200px" }}>
             <div>Dikeluarkan di: Bandung</div>
@@ -304,11 +314,16 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
         </div>
       </div>
 
-      {/* RIGHT COLUMN: VISUM */}
-      <div style={{ flex: "1 1 50%", paddingLeft: "5px", display: "flex", flexDirection: "column" }}>
+      {/* RIGHT / BOTTOM COLUMN: VISUM */}
+      <div className="visum-section" style={{ 
+        flex: spdOrientation === "landscape" ? "1 1 50%" : "1 1 100%", 
+        paddingLeft: spdOrientation === "landscape" ? "5px" : "0", 
+        marginTop: spdOrientation === "portrait" ? "30px" : "0",
+        display: "flex", 
+        flexDirection: "column" 
+      }}>
         <table className="table-visum" style={{ marginTop: "0", fontSize: "11px", borderCollapse: "collapse", width: "100%" }}>
           <tbody>
-            {/* ROW I: Berangkat dari tempat kedudukan */}
             <tr>
               <td style={{ padding: "5px", height: "50px", width: "50%", border: "1px solid black" }}>
                 <strong>I.</strong>
@@ -319,8 +334,6 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                 Pada Tanggal : {formatDateIndonesian(data?.tglMulai)}
               </td>
             </tr>
-
-            {/* ROW II–III */}
             <tr>
               <td style={{ padding: "5px", height: "55px", border: "1px solid black", verticalAlign: "top" }}>
                 <strong>II. Tiba di:</strong> {data?.tempatTujuan}<br />
@@ -338,8 +351,6 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                 <div style={{ borderTop: "1px solid black", width: "70%" }}></div>
               </td>
             </tr>
-
-            {/* ROW III–IV */}
             <tr>
               <td style={{ padding: "5px", height: "55px", border: "1px solid black", verticalAlign: "top" }}>
                 <strong>III. Tiba di:</strong><br />
@@ -357,8 +368,6 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                 <div style={{ borderTop: "1px solid black", width: "70%" }}></div>
               </td>
             </tr>
-
-            {/* ROW IV–V (extra stop) */}
             <tr>
               <td style={{ padding: "5px", height: "55px", border: "1px solid black", verticalAlign: "top" }}>
                 <strong>IV. Tiba di:</strong><br />
@@ -376,8 +385,6 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                 <div style={{ borderTop: "1px solid black", width: "70%" }}></div>
               </td>
             </tr>
-
-            {/* ROW V: Tiba Kembali + TTD PPK */}
             <tr>
               <td colSpan={2} style={{ padding: "8px", border: "1px solid black", verticalAlign: "top" }}>
                 <strong>V. Tiba Kembali:</strong> Bandung<br />
@@ -385,7 +392,7 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                 <div style={{ marginTop: "5px", textAlign: "justify" }}>
                   Telah diperiksa dengan keterangan bahwa perjalanan tersebut atas perintahnya dan semata-mata untuk kepentingan jabatan dalam waktu yang sesingkat-singkatnya.
                 </div>
-                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "15px", textAlign: "center" }}>
+                <div className="signature-section" style={{ display: "flex", justifyContent: "flex-end", marginTop: "15px", textAlign: "center" }}>
                   <div style={{ width: "200px" }}>
                     <div style={{ fontWeight: "bold" }}>Pejabat Pembuat Komitmen</div>
                     <div style={{ height: "50px" }}></div>
@@ -399,7 +406,7 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
         </table>
 
         {/* Visum Notes */}
-        <div style={{ marginTop: "10px", fontSize: "10px" }}>
+        <div className="signature-section" style={{ marginTop: "10px", fontSize: "10px" }}>
           <strong>VI. PERHATIAN:</strong>
           <div style={{ marginTop: "3px", textAlign: "justify" }}>
             PPK yang menerbitkan SPD, pegawai yang melakukan perjalanan dinas, para pejabat yang mengesahkan tanggal berangkat/tiba serta bendahara pengeluaran bertanggungjawab berdasarkan peraturan-peraturan Keuangan/Negara, apabila negara menderita rugi akibat kesalahan, kelalaian dan kealpaannya.
@@ -412,11 +419,13 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
   return (
     <>
       <style>{`
-        /* Print Styles - SPD: A4 Landscape 1 page */
+        /* =========================================================
+           PRINT STYLES - Anti Gap & Konsisten di Semua Perangkat
+           ========================================================= */
         @media print {
           @page {
-            size: A4 landscape;
-            margin: 6mm;
+            margin: 10mm !important; 
+            size: ${docType === "spd" ? spdOrientation : "portrait"} !important;
           }
           * {
             -webkit-print-color-adjust: exact !important;
@@ -444,42 +453,63 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
             background: white !important;
             width: 100% !important;
           }
+          
+          /* KONTROL SURAT PERINTAH (SP) SAAT DICETAK */
           .print-container-sp {
+            width: 100% !important;
+            max-width: 100% !important;
             margin: 0 !important;
             box-shadow: none !important;
             border: none !important;
-            width: 100% !important;
-            padding: 0 !important;
-            min-height: unset !important;
+            padding: 0 !important; 
+            min-height: 0 !important;
+            height: auto !important;
+            font-size: 12px !important; 
+            line-height: 1.5 !important;
           }
+          
+          .signature-section {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+
+          /* MEMAKSA BAGIAN VISUM PINDAH KE HALAMAN BARU (JIKA PORTRAIT) */
+          .visum-section {
+            page-break-before: ${spdOrientation === "portrait" ? "always" : "auto"} !important;
+            break-before: ${spdOrientation === "portrait" ? "page" : "auto"} !important;
+          }
+          
+          /* KONTROL SURAT PERJALANAN DINAS (SPD) SAAT DICETAK */
           .print-container-spd {
+            width: 100% !important;
+            max-width: 100% !important;
             margin: 0 !important;
             box-shadow: none !important;
             border: none !important;
-            width: 100% !important;
-            padding: 0 !important;
-            min-height: unset !important;
-            font-size: 9px !important;
-            gap: 10px !important;
+            padding: 0 !important; 
+            min-height: 0 !important;
+            height: auto !important;
+            font-size: 10px !important;
+            gap: 15px !important;
+            flex-direction: ${spdOrientation === "landscape" ? "row" : "column"} !important;
           }
+
           .print-container-spd .kop-surat-spd {
             padding-bottom: 3px !important;
             margin-bottom: 5px !important;
           }
           .print-container-spd img {
-            width: 45px !important;
-            height: 45px !important;
-          }
-          .print-container-spd .table-spd td {
-            padding: 2px 4px !important;
-          }
-          .print-container-spd .table-visum td {
-            padding: 3px 5px !important;
+            width: 50px !important;
             height: auto !important;
           }
-          .print-container-spd > div > div:last-child {
-            margin-top: 5px !important;
+          .print-container-spd .table-spd td {
+            padding: 3px 5px !important;
           }
+          .print-container-spd .table-visum td {
+            padding: 4px 6px !important;
+            height: auto !important;
+          }
+          
           .page-break {
             page-break-before: always !important;
             break-before: page !important;
@@ -489,28 +519,32 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
           }
         }
 
-        /* Screen Preview Common Styles */
+        /* =========================================================
+           SCREEN PREVIEW STYLES (Tampilan sebelum diprint)
+           ========================================================= */
         .print-container-sp {
           background-color: white;
-          width: 210mm;
-          min-height: 297mm;
+          width: 100%;
+          max-width: 800px;
+          min-height: auto;
           margin: 30px auto;
-          padding: 20mm;
+          padding: 40px 50px;
           box-shadow: 0 4px 10px rgba(0,0,0,0.15);
           border: 1px solid #cbd5e1;
           color: black;
           font-family: Arial, sans-serif;
-          line-height: 1.4;
+          line-height: 1.5;
           box-sizing: border-box;
-          font-size: 12px;
+          font-size: 13px;
         }
 
         .print-container-spd {
           background-color: white;
-          width: 297mm;
-          min-height: 210mm;
+          width: 100%;
+          max-width: ${spdOrientation === "landscape" ? "1100px" : "800px"};
+          min-height: auto;
           margin: 30px auto;
-          padding: 20mm;
+          padding: 40px;
           box-shadow: 0 4px 10px rgba(0,0,0,0.15);
           border: 1px solid #cbd5e1;
           color: black;
@@ -569,36 +603,33 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
           width: 100%;
           border-collapse: collapse;
           margin-top: 15px;
-          font-size: 12px;
         }
 
         .surat-table td {
-          padding: 4px;
+          padding: 6px 4px;
           vertical-align: top;
         }
         
         .col-label {
-          width: 80px;
+          width: 120px;
         }
         .col-colon {
-          width: 10px;
+          width: 15px;
           text-align: center;
         }
         
+        .person-table {
+          width: 100%;
+        }
+        
         .person-table td {
-          padding: 2px 4px;
+          padding: 3px 4px;
           border: none;
         }
         
-        .signature-box {
-          border: 1px solid black;
-          border-radius: 8px;
-          padding: 10px;
-          width: 300px;
-          font-size: 10px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
+        .signature-section {
+          page-break-inside: avoid;
+          break-inside: avoid;
         }
 
         /* SPD Layout Styles */
@@ -649,40 +680,63 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
           <span style={{ fontSize: "12px", opacity: 0.8, backgroundColor: "rgba(255,255,255,0.15)", padding: "2px 8px", borderRadius: "4px" }}>ID: #{id}</span>
         </div>
 
-        {/* Switcher Tab */}
-        <div style={{ display: "flex", backgroundColor: "rgba(255,255,255,0.1)", borderRadius: "8px", padding: "4px" }}>
-          <button
-            onClick={() => setDocType("sp")}
-            style={{
-              backgroundColor: docType === "sp" ? "#38bdf8" : "transparent",
-              color: docType === "sp" ? "#0f2540" : "white",
-              border: "none",
-              padding: "6px 16px",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontSize: "13px",
-              fontWeight: "700",
-              transition: "all 0.2s"
-            }}
-          >
-            Surat Perintah (SP)
-          </button>
-          <button
-            onClick={() => setDocType("spd")}
-            style={{
-              backgroundColor: docType === "spd" ? "#38bdf8" : "transparent",
-              color: docType === "spd" ? "#0f2540" : "white",
-              border: "none",
-              padding: "6px 16px",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontSize: "13px",
-              fontWeight: "700",
-              transition: "all 0.2s"
-            }}
-          >
-            Surat Perjalanan Dinas (SPD)
-          </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          {/* Switcher Tab Jenis Surat */}
+          <div style={{ display: "flex", backgroundColor: "rgba(255,255,255,0.1)", borderRadius: "8px", padding: "4px" }}>
+            <button
+              onClick={() => setDocType("sp")}
+              style={{
+                backgroundColor: docType === "sp" ? "#38bdf8" : "transparent",
+                color: docType === "sp" ? "#0f2540" : "white",
+                border: "none",
+                padding: "6px 16px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "13px",
+                fontWeight: "700",
+                transition: "all 0.2s"
+              }}
+            >
+              Surat Perintah (SP)
+            </button>
+            <button
+              onClick={() => setDocType("spd")}
+              style={{
+                backgroundColor: docType === "spd" ? "#38bdf8" : "transparent",
+                color: docType === "spd" ? "#0f2540" : "white",
+                border: "none",
+                padding: "6px 16px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "13px",
+                fontWeight: "700",
+                transition: "all 0.2s"
+              }}
+            >
+              Surat Perjalanan Dinas (SPD)
+            </button>
+          </div>
+
+          {/* Dropdown Orientasi Khusus SPD */}
+          {docType === "spd" && (
+            <select
+              value={spdOrientation}
+              onChange={(e) => setSpdOrientation(e.target.value as "landscape" | "portrait")}
+              style={{
+                padding: "6px 12px",
+                borderRadius: "6px",
+                border: "none",
+                fontSize: "13px",
+                fontWeight: "700",
+                cursor: "pointer",
+                background: "#fbbf24",
+                color: "#0f2540"
+              }}
+            >
+              <option value="landscape">Landscape (Sejajar)</option>
+              <option value="portrait">Portrait (Bertingkat)</option>
+            </select>
+          )}
         </div>
 
         <div style={{ display: "flex", gap: "12px" }}>
@@ -722,14 +776,11 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
 
       {/* DOCUMENT RENDER CONTAINER */}
       {docType === "sp" ? (() => {
-        /* ======================== SURAT PERINTAH (SP) ======================== */
-
-        // Helper: render person row
         const renderPerson = (p: any, idx: number) => (
-          <li key={idx} style={{ paddingBottom: "8px" }}>
+          <li key={idx} style={{ paddingBottom: "10px" }}>
             <table className="person-table">
               <tbody>
-                <tr><td style={{ width: "60px" }}>Nama</td><td>: <strong>{p.nama}</strong></td></tr>
+                <tr><td style={{ width: "90px" }}>Nama</td><td>: <strong>{p.nama}</strong></td></tr>
                 <tr><td>NIP</td><td>: {p.nip || "-"}</td></tr>
                 <tr><td>Pangkat</td><td>: {p.pangkat || "-"}</td></tr>
                 <tr><td>Jabatan</td><td>: {p.jabatan || "-"}</td></tr>
@@ -738,7 +789,6 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
           </li>
         );
 
-        // Helper: Kop + Body table (shared)
         const renderKop = () => (
           <div className="kop-surat-inner-sp">
             <div className="kop-surat-sp">
@@ -752,11 +802,11 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                 }}
               />
               <div className="kop-teks-sp">
-                <div style={{ fontSize: "14px", fontWeight: "normal" }}>PEMERINTAH DAERAH PROVINSI JAWA BARAT</div>
-                <div style={{ fontSize: "18px", fontWeight: "bold" }}>DINAS KOMUNIKASI DAN INFORMATIKA</div>
-                <div style={{ fontSize: "11px" }}>Jalan Tamansari No. 55 Telp. (022) 2502898 Faksimili (022) 2511505</div>
-                <div style={{ fontSize: "11px" }}>website : https://diskominfo.jabarprov.go.id email : diskominfo@jabarprov.go.id</div>
-                <div style={{ fontSize: "11px" }}>Bandung 40132</div>
+                <div style={{ fontSize: "16px", fontWeight: "normal" }}>PEMERINTAH DAERAH PROVINSI JAWA BARAT</div>
+                <div style={{ fontSize: "20px", fontWeight: "bold" }}>DINAS KOMUNIKASI DAN INFORMATIKA</div>
+                <div style={{ fontSize: "12px" }}>Jalan Tamansari No. 55 Telp. (022) 2502898 Faksimili (022) 2511505</div>
+                <div style={{ fontSize: "12px" }}>website : https://diskominfo.jabarprov.go.id email : diskominfo@jabarprov.go.id</div>
+                <div style={{ fontSize: "12px" }}>Bandung 40132</div>
               </div>
             </div>
           </div>
@@ -767,12 +817,12 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
             <td className="col-label">Untuk</td>
             <td className="col-colon">:</td>
             <td>
-              <ol style={{ margin: 0, paddingLeft: "15px", listStyleType: "decimal" }}>
+              <ol style={{ margin: 0, paddingLeft: "20px", listStyleType: "decimal" }}>
                 <li style={{ paddingBottom: "8px" }}>
                   Melaksanakan perjalanan dinas<br/>
                   <table className="person-table" style={{ marginTop: "4px" }}>
                     <tbody>
-                      <tr><td style={{ width: "100px" }}>Pada tanggal</td><td>: {formatDateIndonesian(data?.tglMulai) || "-"}</td></tr>
+                      <tr><td style={{ width: "120px" }}>Pada tanggal</td><td>: {formatDateIndonesian(data?.tglMulai) || "-"}</td></tr>
                       <tr><td>Dalam rangka</td><td>: {data?.maksud || "-"}</td></tr>
                       <tr><td></td><td>&nbsp;&nbsp;ke {data?.tempatTujuan || "-"}</td></tr>
                     </tbody>
@@ -782,7 +832,7 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                   Pembiayaan dibebankan pada DPA-SKPD Dinas Komunikasi dan Informatika Provinsi Jawa Barat Tahun Anggaran 2026 pada :<br/>
                   <table className="person-table" style={{ marginTop: "4px" }}>
                     <tbody>
-                      <tr><td style={{ width: "100px" }}>Kegiatan</td><td>: {data?.kegiatan || "-"}</td></tr>
+                      <tr><td style={{ width: "120px" }}>Kegiatan</td><td>: {data?.kegiatan || "-"}</td></tr>
                       <tr><td>Sub Kegiatan</td><td>: {data?.subKegiatan || "-"}</td></tr>
                       <tr><td>Kode Rekening</td><td>: {data?.kodeRekening || "-"}</td></tr>
                     </tbody>
@@ -794,13 +844,12 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
           </tr>
         );
 
-        // Helper: render one full SP document
         const renderSpDoc = (pesertaArr: any[], nomorSp: string, signerLabel: string, signerTitle: string, signerName: string, signerNip: string) => (
           <div className="print-container-sp">
             {renderKop()}
             <div style={{ textAlign: "center", marginBottom: "20px" }}>
-              <div style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "2px" }}>SURAT PERINTAH</div>
-              <div style={{ fontSize: "12px" }}>Nomor : {nomorSp}</div>
+              <div style={{ fontSize: "16px", fontWeight: "bold", letterSpacing: "1.5px" }}>SURAT PERINTAH</div>
+              <div style={{ fontSize: "13px" }}>Nomor : {nomorSp}</div>
             </div>
             <table className="surat-table">
               <tbody>
@@ -808,20 +857,20 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                   <td className="col-label">Dasar</td>
                   <td className="col-colon">:</td>
                   <td>
-                    <ol style={{ margin: 0, paddingLeft: "15px" }}>
+                    <ol style={{ margin: 0, paddingLeft: "20px" }}>
                       <li style={{ paddingBottom: "4px" }}>Peraturan Daerah Provinsi Jawa Barat Nomor 10 Tahun 2022 tanggal 15 Desember 2022 Tentang Anggaran Pendapatan dan Belanja Daerah Tahun Anggaran 2023</li>
                       <li>Peraturan Gubernur Jawa Barat Nomor 118 Tahun 2022 tanggal 16 Desember Tahun 2022 tentang Penjabaran Anggaran Pendapatan dan Belanja Daerah Tahun Anggaran 2023.</li>
                     </ol>
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan={3} style={{ textAlign: "center", fontWeight: "bold", padding: "20px 0", letterSpacing: "2px" }}>MEMERINTAHKAN</td>
+                  <td colSpan={3} style={{ textAlign: "center", fontWeight: "bold", padding: "15px 0", letterSpacing: "2px" }}>MEMERINTAHKAN</td>
                 </tr>
                 <tr>
                   <td className="col-label">Kepada</td>
                   <td className="col-colon">:</td>
                   <td>
-                    <ol style={{ margin: 0, paddingLeft: "15px", listStyleType: "decimal" }}>
+                    <ol style={{ margin: 0, paddingLeft: "20px", listStyleType: "decimal" }}>
                       {pesertaArr.map((p, idx) => renderPerson(p, idx))}
                     </ol>
                   </td>
@@ -829,11 +878,11 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                 {renderUntukBody()}
               </tbody>
             </table>
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "40px" }}>
+            <div className="signature-section" style={{ display: "flex", justifyContent: "flex-end", marginTop: "30px" }}>
               <div style={{ width: "350px", textAlign: "left" }}>
-                <table style={{ border: "none" }}>
+                <table style={{ border: "none", width: "100%" }}>
                   <tbody>
-                    <tr><td style={{ width: "90px" }}>Ditetapkan di</td><td>: Bandung</td></tr>
+                    <tr><td style={{ width: "110px" }}>Ditetapkan di</td><td>: Bandung</td></tr>
                     <tr><td>Pada Tanggal</td><td>: {formatDateIndonesian(data?.tanggalSpd || data?.tglMulai) || "2 Juli 2026"}</td></tr>
                   </tbody>
                 </table>
@@ -841,7 +890,7 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                   <div>{signerLabel}</div>
                   <div style={{ height: "65px" }}></div>
                   <div style={{ fontWeight: "bold", textDecoration: "underline" }}>{signerName}</div>
-                  <div style={{ fontSize: "11px" }}>{signerTitle}</div>
+                  <div style={{ fontSize: "12px" }}>{signerTitle}</div>
                   <div>NIP. {signerNip}</div>
                 </div>
               </div>
@@ -850,14 +899,12 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
         );
 
         if (hasKabid) {
-          // Kabid signed by Sekretaris/a.n. Kadis
           const kabidNomorSp = `${data?.noSpd || "SP/APTIKA/2026"}/KBD`;
           const staffNomorSp = `${data?.noSpd || "SP/APTIKA/2026"}/STF`;
           const kabidPerson = kabidList[0];
 
           return (
             <>
-              {/* SP 1: Kabid saja – ditandatangani Sekretaris */}
               {renderSpDoc(
                 kabidList,
                 kabidNomorSp,
@@ -866,11 +913,7 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
                 data?.raw?.secretary_name || "AGI AGUNG GALUH PURWA, S.STP., M.Sc., MPA.",
                 data?.raw?.secretary_nip || "197507221999031004"
               )}
-
-              {/* Page Break */}
               <div className="page-break"></div>
-
-              {/* SP 2: Staff biasa – ditandatangani Kabid */}
               {staffList.length > 0 && renderSpDoc(
                 staffList,
                 staffNomorSp,
@@ -883,7 +926,6 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
           );
         }
 
-        // No Kabid: single SP, signed by Sekretaris
         return renderSpDoc(
           allPeserta,
           data?.noSpd || "SP/APTIKA/2026",
@@ -893,37 +935,27 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
           data?.raw?.secretary_nip || "197507221999031004"
         );
       })() : (() => {
-        /* ======================== SURAT PERJALANAN DINAS (SPD) ======================== */
-        // Setiap peserta mendapat dokumen SPD sendiri:
-        // - Kabid → SPD ditandatangani Sekretaris
-        // - Setiap Staff → SPD ditandatangani Kabid (atau PPK default)
-        // Dengan 1 Kabid + 3 Staff = 4 dokumen SPD terpisah
-
         const signerKabid = hasKabid ? kabidList[0] : null;
         const staffSignerName = signerKabid?.nama || data?.raw?.orderer_name || "Dr. Ir. G.P. Ginanjar, M.T.";
         const staffSignerNip  = signerKabid?.nip  || data?.raw?.orderer_nip  || "197412081999031002";
 
         return (
           <>
-            {/* SPD untuk Kabid (jika ada) – ditandatangani Sekretaris */}
             {hasKabid && renderSpdDoc(
               kabidList[0],
-              [],  // Kabid tidak punya pengikut
+              [],
               kabidList[0]?.nomorSpd || data?.noSpd || "",
               "Sekretaris Dinas Komunikasi dan Informatika Provinsi Jawa Barat",
               data?.raw?.secretary_name || "AGI AGUNG GALUH PURWA, S.STP., M.Sc., MPA.",
               data?.raw?.secretary_nip  || "197507221999031004"
             )}
 
-            {/* SPD individual untuk setiap Staff – masing-masing 1 halaman */}
             {staffList.map((staff: any, idx: number) => (
               <React.Fragment key={idx}>
-                {/* Page break sebelum setiap dokumen (Kabid sudah di atas, atau antar staff) */}
                 {(hasKabid || idx > 0) && <div className="page-break"></div>}
-
                 {renderSpdDoc(
                   staff,
-                  [],  // Setiap staff punya dokumen sendiri, tidak ada pengikut
+                  [],
                   staff?.nomorSpd || data?.noSpd || "",
                   hasKabid
                     ? "Kepala Bidang Aplikasi dan Informatika"
@@ -934,7 +966,6 @@ export default function SpdPrintPage({ params }: PrintPageProps) {
               </React.Fragment>
             ))}
 
-            {/* Fallback jika tidak ada kabid dan tidak ada staff */}
             {!hasKabid && staffList.length === 0 && renderSpdDoc(
               allPeserta[0],
               allPeserta.slice(1),
