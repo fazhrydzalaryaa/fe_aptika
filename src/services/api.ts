@@ -2244,6 +2244,144 @@ export const deleteRencanaAudit = async (id: number) => {
   return res.data;
 };
 
+// ============================================================
+// SMKI: FORMULIR HAK AKSES TI (FR-018)
+// ============================================================
+
+export interface MasterSimpleItem {
+  id: number;
+  nama: string;
+}
+
+export interface HakAksesTiItem {
+  id?: number;
+  id_hak_akses?: number;
+  no_dokumen?: string | null;
+  nomor_request?: string | null;
+  nama_pemohon?: string | null;
+  nip_pemohon?: string | null;
+  nip_id_pegawai?: string | null;
+  jabatan_pemohon?: string | null;
+  jabatan?: string | null;
+  email?: string | null;
+  kontak_person?: string | null;
+  id_unit_kerja?: number | null;
+  id_jenis_permohonan?: number | null;
+  id_sistem_aplikasi?: number | null;
+  id_level_akses?: number | null;
+  unit_kerja?: any;
+  nama_unit_kerja?: string | null;
+  jenis_permohonan?: any;
+  nama_jenis_permohonan?: string | null;
+  sistem_aplikasi?: any;
+  nama_sistem_aplikasi?: string | null;
+  level_akses?: any;
+  nama_level_akses?: string | null;
+  sifat_akses?: string | null;
+  waktu_akses?: string | null;
+  waktu_akses_lainnya?: string | null;
+  jenis_akses_ids?: number[] | null;
+  jenis_akses_labels?: string[] | null;
+  jenis_akses?: any[] | null;
+  daftar_jenis_akses?: string[] | null;
+  nama_sistem?: string | null;
+  masa_berlaku?: string | null;
+  masa_berlaku_mulai?: string | null;
+  masa_berlaku_selesai?: string | null;
+  alasan_pengajuan?: string | null;
+  keperluan?: string | null;
+  sistem_lainnya?: string | null;
+  modul_fitur?: string[] | any;
+  persetujuan_ketentuan?: boolean | null;
+  status?: "Diproses" | "Disetujui" | "Ditolak" | "Draft" | string | null;
+  status_permohonan?: string | null;
+  tanggal_pengajuan?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  nama_atasan?: string | null;
+  nip_atasan?: string | null;
+  jabatan_atasan?: string | null;
+  catatan_atasan?: string | null;
+  nama_petugas_ti?: string | null;
+  nip_petugas_ti?: string | null;
+  tanggal_eksekusi?: string | null;
+  catatan_petugas_ti?: string | null;
+  bidang_id?: number | null;
+  user_id?: number | null;
+}
+
+export interface HakAksesTiStats {
+  total_permohonan: number;
+  total_diproses: number;
+  total_disetujui: number;
+  total_ditolak: number;
+  total_draft: number;
+}
+
+export interface HakAksesTiLookupData {
+  unit_kerja?: any[];
+  unit_kerjas?: any[];
+  jenis_permohonan?: any[];
+  jenis_permohonans?: any[];
+  sistem_aplikasi?: any[];
+  sistem_aplikasis?: any[];
+  level_akses?: any[];
+  level_akseses?: any[];
+  jenis_akses?: any[];
+  jenis_akseses?: any[];
+  status_permohonan?: any[];
+  default_meta?: {
+    no_dokumen: string;
+    no_revisi: string;
+    tanggal_berlaku: string;
+  };
+}
+
+export const getHakAksesTiList = async (params?: {
+  search?: string;
+  status?: string;
+  unit_kerja?: string;
+  sistem_aplikasi?: string;
+  jenis_permohonan?: string;
+  page?: number;
+  per_page?: number;
+}) => {
+  const res = await api.get("/smki/hak-akses-ti", { params });
+  return res.data;
+};
+
+export const getHakAksesTiDetail = async (id: number | string) => {
+  const res = await api.get(`/smki/hak-akses-ti/${id}`);
+  return res.data;
+};
+
+export const getHakAksesTiLookup = async () => {
+  const res = await api.get("/smki/hak-akses-ti/lookup");
+  return res.data;
+};
+
+export const createHakAksesTi = async (payload: Partial<HakAksesTiItem>) => {
+  const res = await api.post("/smki/hak-akses-ti", payload);
+  return res.data;
+};
+
+export const updateHakAksesTi = async (id: number | string, payload: Partial<HakAksesTiItem>) => {
+  const res = await api.put(`/smki/hak-akses-ti/${id}`, payload);
+  return res.data;
+};
+
+export const deleteHakAksesTi = async (id: number | string) => {
+  const res = await api.delete(`/smki/hak-akses-ti/${id}`);
+  return res.data;
+};
+
+export const exportHakAksesTiDocx = async (id: number | string) => {
+  const res = await api.get(`/smki/hak-akses-ti/export-docx?id=${id}`, {
+    responseType: "blob",
+  });
+  return res.data;
+};
+
 
 
 

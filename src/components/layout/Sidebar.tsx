@@ -247,6 +247,12 @@ export default function Sidebar() {
                 iconColor: "text-amber-600 bg-amber-50 border border-amber-200/60",
               },
               {
+                name: "Hak Akses TI",
+                key: "smki/hak-akses-ti",
+                icon: ShieldCog,
+                iconColor: "text-cyan-600 bg-cyan-50 border border-cyan-200/60",
+              },
+              {
                 name: "Daftar Rekaman",
                 key: "smki/daftar-rekaman",
                 icon: FileText,
