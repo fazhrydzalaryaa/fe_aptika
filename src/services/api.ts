@@ -2412,6 +2412,118 @@ export const exportHakAksesTiDocx = async (id: number | string) => {
   return res.data;
 };
 
+// ============================================================
+// SMKI: LAPORAN AUDIT INTERNAL (FR-006)
+// ============================================================
+
+export interface SmkiUnitKerja {
+  id_unit_kerja: number;
+  nama_unit_kerja: string;
+}
+
+export interface SmkiKategoriTemuan {
+  id_kategori: number;
+  nama_kategori: string;
+}
+
+export interface SmkiDetailTemuan {
+  id_detail_temuan?: number;
+  id_laporan_audit?: number;
+  tanggal_audit?: string;
+  id_kategori?: number | null;
+  kategori_temuan?: string;
+  klausul_annex?: string;
+  deskripsi_temuan?: string;
+  rekomendasi?: string;
+}
+
+export interface SmkiLaporanAudit {
+  id_laporan_audit: number;
+  nomor_laporan: string;
+  temuan_major: number;
+  temuan_minor: number;
+  ofi: number;
+  id_unit_kerja?: number | null;
+  nama_unit_kerja?: string;
+  id_auditor?: number | null;
+  auditor?: string;
+  id_auditee?: number | null;
+  auditee?: string;
+  tanggal_audit?: string;
+  id_kategori?: number | null;
+  kategori?: string;
+  klausul_annex?: string;
+  latar_belakang?: string;
+  tujuan?: string;
+  ruang_lingkup?: string;
+  id_status?: number | null;
+  status: string;
+  bidang_id?: number | null;
+  user_id?: number | null;
+  created_at?: string;
+  updated_at?: string;
+  unit_kerja?: SmkiUnitKerja;
+  kategori_temuan?: SmkiKategoriTemuan;
+  detail_temuans?: SmkiDetailTemuan[];
+}
+
+export interface LaporanAuditStats {
+  total_laporan: number;
+  sedang_ditinjau: number;
+  total_draft: number;
+  total_selesai: number;
+}
+
+export const getSmkiLaporanAuditList = async (params?: {
+  search?: string;
+  unit_kerja?: string;
+  status?: string;
+  date_from?: string;
+  date_to?: string;
+  page?: number;
+  per_page?: number;
+}) => {
+  const res = await api.get("/smki/laporan-audit", { params });
+  return res.data;
+};
+
+export const getSmkiLaporanAuditDetail = async (id: number | string) => {
+  const res = await api.get(`/smki/laporan-audit/${id}`);
+  return res.data;
+};
+
+export const getSmkiLaporanAuditLookup = async () => {
+  const res = await api.get("/smki/laporan-audit/lookup");
+  return res.data;
+};
+
+export const createSmkiLaporanAudit = async (
+  payload: Omit<Partial<SmkiLaporanAudit>, 'unit_kerja' | 'detail_temuans'> & { unit_kerja?: string; details?: SmkiDetailTemuan[] }
+) => {
+  const res = await api.post("/smki/laporan-audit", payload);
+  return res.data;
+};
+
+export const updateSmkiLaporanAudit = async (
+  id: number | string,
+  payload: Omit<Partial<SmkiLaporanAudit>, 'unit_kerja' | 'detail_temuans'> & { unit_kerja?: string; details?: SmkiDetailTemuan[] }
+) => {
+  const res = await api.put(`/smki/laporan-audit/${id}`, payload);
+  return res.data;
+};
+
+export const deleteSmkiLaporanAudit = async (id: number | string) => {
+  const res = await api.delete(`/smki/laporan-audit/${id}`);
+  return res.data;
+};
+
+export const exportSmkiLaporanAuditDocx = async (id: number | string) => {
+  const res = await api.get(`/smki/laporan-audit/${id}/export-docx`, {
+    responseType: "blob",
+  });
+  return res.data;
+};
+
 
 
 

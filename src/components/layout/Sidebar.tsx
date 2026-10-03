@@ -24,6 +24,7 @@ import {
   Laptop,
   Box,
   CalendarCheck,
+  FileCheck,
 } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import { useSidebarStore } from "@/store/useSidebarStore";
@@ -276,6 +277,12 @@ export default function Sidebar() {
                 icon: CalendarCheck,
                 iconColor: "text-teal-600 bg-teal-50 border border-teal-200/60",
               },
+              {
+                name: "Laporan Audit",
+                key: "smki/laporan-audit",
+                icon: FileCheck,
+                iconColor: "text-emerald-600 bg-emerald-50 border border-emerald-200/60",
+              },
             ],
           },
         ]
@@ -500,7 +507,7 @@ export default function Sidebar() {
                                 : sub.key === "daftar-aset-ti"
                                 ? pathname === "/daftar-aset-ti" || pathname === "/smki/daftar-aset-ti"
                                 : sub.key.includes("/")
-                                ? pathname === `/${sub.key}`
+                                ? pathname === `/${sub.key}` || pathname.startsWith(`/${sub.key}/`)
                                 : activeSegment === sub.key;
                             return (
                               <button
