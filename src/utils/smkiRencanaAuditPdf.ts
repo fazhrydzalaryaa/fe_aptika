@@ -55,6 +55,8 @@ export interface ExportPdfOptions {
   metadata?: Partial<RencanaAuditMetadata>;
   leadAuditorName?: string;
   leadAuditorNip?: string;
+  approvedByName?: string;
+  approvedByNip?: string;
   tanggalDokumen?: string;
 }
 
@@ -73,6 +75,8 @@ export async function exportRencanaAuditToPdf(options: ExportPdfOptions): Promis
     metadata,
     leadAuditorName = "",
     leadAuditorNip = "",
+    approvedByName = "",
+    approvedByNip = "",
   } = options;
 
   const noDokumen = metadata?.no_dokumen || "F05-SMKI";
