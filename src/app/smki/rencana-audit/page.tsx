@@ -25,10 +25,6 @@ import {
   Info,
   Check,
   RotateCcw,
-  Bell,
-  ChevronDown,
-  Home,
-  LayoutDashboard,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import ServiceRouteGuard from "@/components/auth/ServiceRouteGuard";
@@ -422,65 +418,6 @@ export default function FormulirRencanaAuditPage() {
       <div className="flex flex-col gap-5 pb-16 max-w-7xl mx-auto px-2 sm:px-4 font-sans text-slate-800">
         
         {/* ============================================================ */}
-        {/* 1. TOP BREADCRUMB & HEADER NAV BAR (Matching Visily Mockup)  */}
-        {/* ============================================================ */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500 py-1">
-          {/* Breadcrumbs */}
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <Link href="/" className="hover:text-slate-800 flex items-center gap-1 transition-colors">
-              <Home size={14} className="text-slate-400" />
-              <span>Beranda</span>
-            </Link>
-            <span className="text-slate-300">&gt;</span>
-            <Link href="/dashboard" className="hover:text-slate-800 flex items-center gap-1 transition-colors">
-              <LayoutDashboard size={14} className="text-slate-400" />
-              <span>Dashboard</span>
-            </Link>
-            <span className="text-slate-300">&gt;</span>
-            <span className="font-semibold text-slate-800 flex items-center gap-1">
-              <FileText size={14} className="text-slate-600" />
-              <span>Formulir Rencana Audit</span>
-            </span>
-          </div>
-
-          {/* Right: Search, Notification Bell, User Pill */}
-          <div className="flex items-center gap-4">
-            {/* Top Search */}
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={topSearch}
-                onChange={(e) => setTopSearch(e.target.value)}
-                placeholder="Cari rencana audit..."
-                className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500 w-44 sm:w-56 text-slate-700"
-              />
-            </div>
-
-            {/* Notification Bell */}
-            <div className="relative cursor-pointer text-slate-500 hover:text-slate-700">
-              <Bell size={17} />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
-            </div>
-
-            {/* User Profile */}
-            <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-              <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-xs">
-                FP
-              </div>
-              <div className="flex flex-col text-left">
-                <span className="font-bold text-slate-800 text-[11px] leading-tight">
-                  {user?.name || "feni pebriani"}
-                </span>
-                <span className="text-[10px] text-slate-400">
-                  APTIKA Intern
-                </span>
-              </div>
-              <ChevronDown size={14} className="text-slate-400 ml-0.5" />
-            </div>
-          </div>
-        </div>
-
         {/* ============================================================ */}
         {/* 2. HERO BANNER WITH CIRCUIT SHIELD GRAPHIC                   */}
         {/* ============================================================ */}
