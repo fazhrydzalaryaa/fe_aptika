@@ -359,6 +359,7 @@ export default function EditLaporanAuditPage() {
                 onChange={(e) => setUnitKerja(e.target.value)}
                 className="w-full text-xs bg-slate-50/50 border border-slate-300 rounded-xl px-3.5 py-2.5 outline-none focus:bg-white focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition"
               >
+                <option value="">-- Pilih Unit Kerja --</option>
                 {unitKerjas.map((uk) => (
                   <option key={uk.id_unit_kerja} value={uk.nama_unit_kerja}>
                     {uk.nama_unit_kerja}
