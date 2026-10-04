@@ -13,6 +13,7 @@ import {
   Building2,
   Eye,
   ChevronDown,
+  Database,
 } from "lucide-react";
 
 import { useAuthStore } from "@/store/useAuthStore";
@@ -142,6 +143,17 @@ export default function Homepage() {
       actionColor: "text-emerald-600 dark:text-emerald-400",
       path: "/smki",
     },
+    {
+      id: "data-master",
+      code: "DATA_MASTER",
+      title: "Data Master",
+      desc: "Sentral referensi data sistem (Kode Rekening, Alat Angkutan, Daftar Pegawai, dan Master NDA).",
+      icon: <Database size={22} className="text-cyan-600" />,
+      iconBg: "bg-cyan-100 dark:bg-cyan-950/60",
+      actionText: "Kelola Data Master",
+      actionColor: "text-cyan-600 dark:text-cyan-400",
+      path: "/master",
+    },
   ];
 
   // Penentuan modul yang tampil
@@ -160,15 +172,16 @@ export default function Homepage() {
       );
       if (!targetBidang) return allCards;
 
-      // Hanya tampilkan card yang aktif pada bidang yang dipilih
+      // Hanya tampilkan card yang aktif pada bidang yang dipilih (Data Master selalu tersedia untuk referensi)
       return allCards.filter((card) => {
+        if (card.code === "DATA_MASTER") return true;
         const svc = targetBidang.services.find((s) => s.code === card.code);
         return svc ? svc.is_enabled : true;
       });
     }
 
-    // Pengguna biasa / Admin Bidang biasa
-    return allCards.filter((c) => hasServicePermission(c.code));
+    // Pengguna biasa / Admin Bidang biasa (Data Master selalu tersedia)
+    return allCards.filter((c) => c.code === "DATA_MASTER" || hasServicePermission(c.code));
   };
 
   const cards = getFilteredCards();
@@ -189,7 +202,7 @@ export default function Homepage() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-cyan-200 text-xs font-semibold backdrop-blur-sm border border-white/15 mb-3">
               <Sparkles size={14} className="text-cyan-300 animate-pulse" />
               <span>APTIKA Tools Jawa Barat</span>
-              {isSuperAdmin && (
+              {mounted && isSuperAdmin && (
                 <span className="ml-1 px-2 py-0.5 rounded-full bg-amber-400 text-amber-950 font-extrabold text-[10px] uppercase tracking-wider">
                   Super Admin
                 </span>
@@ -199,7 +212,7 @@ export default function Homepage() {
               Selamat Datang, <span className="text-cyan-300" suppressHydrationWarning>{userName}</span>
             </h1>
             <p className="text-sm text-slate-200 leading-relaxed">
-              {isSuperAdmin
+              {mounted && isSuperAdmin
                 ? "Sebagai Super Admin, Anda memiliki wewenang penuh untuk meninjau dan mengakses seluruh layanan lintas 7 Unit Kerja Diskominfo Jawa Barat."
                 : "Platform pengelolaan dan rekapitulasi data Aplikasi Informatika Dinas Komunikasi dan Informatika Provinsi Jawa Barat. Silakan pilih layanan di bawah untuk memulai."}
             </p>
@@ -219,7 +232,7 @@ export default function Homepage() {
       </div>
 
       {/* ── BAR KHUSUS SUPER ADMIN: SELECTOR BIDANG / UNIT KERJA ── */}
-      {isSuperAdmin && (
+      {mounted && isSuperAdmin && (
         <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border border-amber-500/30 dark:border-amber-500/20 rounded-2xl p-5 shadow-sm space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-500/20 pb-3">
             <div className="flex items-center gap-2.5">
@@ -292,7 +305,7 @@ export default function Homepage() {
             Pilih Modul Service
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">
-            {isSuperAdmin && selectedBidangId !== "all"
+            {mounted && isSuperAdmin && selectedBidangId !== "all"
               ? `Status ketersediaan modul untuk Bidang ${selectedBidangObj?.bidang_name || ""}:`
               : "Silakan pilih modul layanan yang ingin Anda kelola untuk mengakses dashboard dan fitur terkait."}
           </p>

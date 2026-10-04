@@ -57,12 +57,12 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
   const lamaHari =
     data?.tglMulai && data?.tglSelesai
       ? Math.max(
-        1,
-        Math.ceil(
-          (new Date(data.tglSelesai).getTime() - new Date(data.tglMulai).getTime()) /
-          86400000
-        ) + 1
-      )
+          1,
+          Math.ceil(
+            (new Date(data.tglSelesai).getTime() - new Date(data.tglMulai).getTime()) /
+              86400000
+          ) + 1
+        )
       : 0;
 
   // Parse peserta to get kabid and staff counts
@@ -79,7 +79,7 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
   const kabidCount = foundKabid ? 1 : 0;
   const staffCount = foundStaff.length;
 
-  // Calculate total cost
+  // Calculate total cost (disembunyikan)
   const uangHarian = data?.raw?.uang_harian || 0;
   const totalBiaya = lamaHari * uangHarian * (kabidCount + staffCount);
 
@@ -157,10 +157,13 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
                 {formatDate(data?.tglSelesai)}
               </div>
             </div>
-            <div>
-              <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>UANG HARIAN</div>
-              <div style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>{formatRupiah(uangHarian)}</div>
-            </div>
+            {/* Uang Harian disembunyikan */}
+            {false && (
+              <div>
+                <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>UANG HARIAN</div>
+                <div style={{ fontSize: "13px", fontWeight: "600", color: "#334155" }}>{formatRupiah(uangHarian)}</div>
+              </div>
+            )}
           </div>
 
           <div style={{ borderTop: "1px solid #f1f5f9", margin: "0 -20px 20px -20px" }}></div>
@@ -216,10 +219,13 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
                 <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>JABATAN</div>
                 <div style={{ fontSize: "12px", color: "#334155" }}>{foundKabid?.pegawai?.jabatan || "-"}</div>
               </div>
-              <div style={{ marginBottom: "0" }}>
-                <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>TOTAL UANG</div>
-                <div style={{ fontSize: "13px", fontWeight: "700", color: "#dc2626" }}>{formatRupiah(lamaHari * uangHarian)}</div>
-              </div>
+              {/* Total Uang Kabid disembunyikan */}
+              {false && (
+                <div style={{ marginBottom: "0" }}>
+                  <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>TOTAL UANG</div>
+                  <div style={{ fontSize: "13px", fontWeight: "700", color: "#dc2626" }}>{formatRupiah(lamaHari * uangHarian)}</div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -240,7 +246,8 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
                 <th style={{ padding: "12px 20px", textAlign: "left", fontSize: "10px", fontWeight: "700", color: "#94a3b8" }}>NIP</th>
                 <th style={{ padding: "12px 20px", textAlign: "left", fontSize: "10px", fontWeight: "700", color: "#94a3b8" }}>PANGKAT</th>
                 <th style={{ padding: "12px 20px", textAlign: "left", fontSize: "10px", fontWeight: "700", color: "#94a3b8" }}>JABATAN</th>
-                <th style={{ padding: "12px 20px", textAlign: "right", fontSize: "10px", fontWeight: "700", color: "#94a3b8" }}>TOTAL</th>
+                {/* Kolom Total Disembunyikan */}
+                {false && <th style={{ padding: "12px 20px", textAlign: "right", fontSize: "10px", fontWeight: "700", color: "#94a3b8" }}>TOTAL</th>}
               </tr>
             </thead>
             <tbody>
@@ -255,7 +262,8 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
                       <td style={{ padding: "16px 20px", color: "#475569" }}>{p?.pegawai?.nip || "-"}</td>
                       <td style={{ padding: "16px 20px", color: "#475569" }}>{p?.pegawai?.pangkat || "-"}</td>
                       <td style={{ padding: "16px 20px", color: "#475569" }}>{p?.pegawai?.jabatan || "-"}</td>
-                      <td style={{ padding: "16px 20px", textAlign: "right", fontWeight: "700", color: "#0f2540" }}>{formatRupiah(lamaHari * uangHarian)}</td>
+                      {/* Sel Total Peserta Disembunyikan */}
+                      {false && <td style={{ padding: "16px 20px", textAlign: "right", fontWeight: "700", color: "#0f2540" }}>{formatRupiah(lamaHari * uangHarian)}</td>}
                     </tr>
                   );
                 })
@@ -269,60 +277,62 @@ export default function SpdSummaryPage({ params }: SummaryPageProps) {
         </div>
       </div>
 
-      {/* Summary Section */}
-      <div style={{ backgroundColor: "white", borderRadius: "8px", border: "1px solid #e2e8f0", marginTop: "24px", overflow: "hidden" }}>
-        <div style={{ backgroundColor: "#f1f5f9", padding: "12px 20px", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", gap: "8px" }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f2540" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-          </svg>
-          <span style={{ fontSize: "13px", fontWeight: "700", color: "#0f2540", letterSpacing: "0.5px" }}>RINGKASAN PERJALANAN</span>
-        </div>
-        <div style={{ padding: "20px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "20px" }}>
-            <div>
-              <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>JUMLAH PESERTA</div>
-              <div style={{ fontSize: "18px", fontWeight: "800", color: "#0f2540" }}>{pesertaList.length} Orang</div>
-              <div style={{ fontSize: "11px", color: "#64748b", marginTop: "4px" }}>
-                {kabidCount > 0 && `${kabidCount} Kabid`}
-                {kabidCount > 0 && staffCount > 0 && " + "}
-                {staffCount > 0 && `${staffCount} Staff`}
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>DURASI PERJALANAN</div>
-              <div style={{ fontSize: "18px", fontWeight: "800", color: "#0f2540" }}>{lamaHari} Hari</div>
-            </div>
+      {/* Ringkasan Section Keuangan (Disembunyikan Sepenuhnya) */}
+      {false && (
+        <div style={{ backgroundColor: "white", borderRadius: "8px", border: "1px solid #e2e8f0", marginTop: "24px", overflow: "hidden" }}>
+          <div style={{ backgroundColor: "#f1f5f9", padding: "12px 20px", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", gap: "8px" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f2540" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span style={{ fontSize: "13px", fontWeight: "700", color: "#0f2540", letterSpacing: "0.5px" }}>RINGKASAN PERJALANAN</span>
           </div>
-
-          <div style={{ borderTop: "1px solid #f1f5f9", margin: "20px 0", paddingTop: "20px" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "16px" }}>
-              <div>
-                <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>UANG HARIAN/HARI</div>
-                <div style={{ fontSize: "14px", fontWeight: "600", color: "#334155" }}>{formatRupiah(uangHarian)}</div>
-              </div>
+          <div style={{ padding: "20px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "20px" }}>
               <div>
                 <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>JUMLAH PESERTA</div>
-                <div style={{ fontSize: "14px", fontWeight: "600", color: "#334155" }}>{pesertaList.length} Orang</div>
+                <div style={{ fontSize: "18px", fontWeight: "800", color: "#0f2540" }}>{pesertaList.length} Orang</div>
+                <div style={{ fontSize: "11px", color: "#64748b", marginTop: "4px" }}>
+                  {kabidCount > 0 && `${kabidCount} Kabid`}
+                  {kabidCount > 0 && staffCount > 0 && " + "}
+                  {staffCount > 0 && `${staffCount} Staff`}
+                </div>
               </div>
               <div>
-                <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>LAMA PERJALANAN</div>
-                <div style={{ fontSize: "14px", fontWeight: "600", color: "#334155" }}>{lamaHari} Hari</div>
+                <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>DURASI PERJALANAN</div>
+                <div style={{ fontSize: "18px", fontWeight: "800", color: "#0f2540" }}>{lamaHari} Hari</div>
               </div>
             </div>
 
-            <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontSize: "12px", fontWeight: "600", color: "#475569", marginBottom: "4px" }}>Perhitungan</div>
-                <div style={{ fontSize: "13px", color: "#64748b" }}>{formatRupiah(uangHarian)} × {lamaHari} hari × {pesertaList.length} peserta</div>
+            <div style={{ borderTop: "1px solid #f1f5f9", margin: "20px 0", paddingTop: "20px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "16px", marginBottom: "16px" }}>
+                <div>
+                  <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>UANG HARIAN/HARI</div>
+                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#334155" }}>{formatRupiah(uangHarian)}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>JUMLAH PESERTA</div>
+                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#334155" }}>{pesertaList.length} Orang</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginBottom: "4px" }}>LAMA PERJALANAN</div>
+                  <div style={{ fontSize: "14px", fontWeight: "600", color: "#334155" }}>{lamaHari} Hari</div>
+                </div>
               </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: "12px", fontWeight: "600", color: "#475569", marginBottom: "4px" }}>TOTAL BIAYA</div>
-                <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f2540" }}>{formatRupiah(totalBiaya)}</div>
+
+              <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontSize: "12px", fontWeight: "600", color: "#475569", marginBottom: "4px" }}>Perhitungan</div>
+                  <div style={{ fontSize: "13px", color: "#64748b" }}>{formatRupiah(uangHarian)} × {lamaHari} hari × {pesertaList.length} peserta</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: "12px", fontWeight: "600", color: "#475569", marginBottom: "4px" }}>TOTAL BIAYA</div>
+                  <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f2540" }}>{formatRupiah(totalBiaya)}</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Action Buttons */}
       <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: "16px", marginTop: "32px", padding: "20px 0", borderTop: "1px solid #e2e8f0" }}>

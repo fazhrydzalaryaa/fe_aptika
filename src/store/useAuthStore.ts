@@ -33,7 +33,7 @@ interface AuthState {
   initialized: boolean;
   error: string | null;
 
-  fetchProfile: () => Promise<void>;
+  fetchProfile: () => Promise<boolean>;
   clearAuth: () => void;
   hasServicePermission: (serviceCode: string) => boolean;
 }
@@ -115,8 +115,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           initialized: true,
           error: null,
         });
+        return true;
       } else {
         set({ loading: false, initialized: true });
+        return false;
       }
     } catch (err: any) {
       console.error("Gagal memuat data /api/me:", err);
@@ -125,6 +127,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         initialized: true,
         error: "Gagal memuat profil hak akses pengguna.",
       });
+      return false;
     }
   },
 

@@ -24,6 +24,8 @@ import {
   Laptop,
   Box,
   Building2,
+  CalendarCheck,
+  FileCheck,
 } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import { useSidebarStore } from "@/store/useSidebarStore";
@@ -247,6 +249,12 @@ export default function Sidebar() {
                 iconColor: "text-amber-600 bg-amber-50 border border-amber-200/60",
               },
               {
+                name: "Hak Akses TI",
+                key: "smki/hak-akses-ti",
+                icon: ShieldCog,
+                iconColor: "text-cyan-600 bg-cyan-50 border border-cyan-200/60",
+              },
+              {
                 name: "Daftar Rekaman",
                 key: "smki/daftar-rekaman",
                 icon: FileText,
@@ -270,17 +278,36 @@ export default function Sidebar() {
                 icon: FileText,
                 iconColor: "text-emerald-600 bg-emerald-50 border border-emerald-200/60",
               },
+              {
+                name: "Rencana Audit",
+                key: "smki/rencana-audit",
+                icon: CalendarCheck,
+                iconColor: "text-teal-600 bg-teal-50 border border-teal-200/60",
+              },
+              {
+                name: "Laporan Audit",
+                key: "smki/laporan-audit",
+                icon: FileCheck,
+                iconColor: "text-emerald-600 bg-emerald-50 border border-emerald-200/60",
+              },
             ],
           },
         ]
       : []),
+    {
+      type: "single" as const,
+      name: "Data Master",
+      key: "master",
+      icon: Database,
+      iconColor: "text-cyan-600 bg-cyan-50 border border-cyan-200/60",
+    },
   ];
 
   const handleTeamClick = (key: string) => {
     setOpenMobile(false);
     if (key === "dashboard") {
       router.push("/dashboard");
-    } else if (key === "administrasisurat" || key === "manajementugasdigital" || key === "smki" || key === "daftar-aset-ti") {
+    } else if (key === "administrasisurat" || key === "manajementugasdigital" || key === "smki" || key === "daftar-aset-ti" || key === "master") {
       router.push(`/${key}`);
     } else if (key.includes("/")) {
       router.push(`/${key}`);
@@ -487,7 +514,7 @@ export default function Sidebar() {
                                 : sub.key === "daftar-aset-ti"
                                 ? pathname === "/daftar-aset-ti" || pathname === "/smki/daftar-aset-ti"
                                 : sub.key.includes("/")
-                                ? pathname === `/${sub.key}`
+                                ? pathname === `/${sub.key}` || pathname.startsWith(`/${sub.key}/`)
                                 : activeSegment === sub.key;
                             return (
                               <button
@@ -565,4 +592,4 @@ export default function Sidebar() {
       </aside>
     </>
   );
-}
+}

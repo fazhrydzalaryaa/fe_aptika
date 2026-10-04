@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Users, Eye, Edit, Trash2, Plus, Printer, Upload, FileText, Search, RotateCcw } from "lucide-react";
-import { getMagangList, deleteMagang, createMagang, updateMagang, uploadMagangNda, getBidangs } from "@/services/api";
+import { getMagangList, deleteMagang, createMagang, updateMagang, uploadMagangNda, getBidangs, getMasterNdaList } from "@/services/api";
 import { Modal } from "@/components/ui/Modal";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -118,9 +118,11 @@ export default function MagangDashboard() {
 
   // NDA Modal state
   const [isNdaModalOpen, setIsNdaModalOpen] = useState(false);
+  const [masterNdas, setMasterNdas] = useState<any[]>([]);
   const [ndaFormData, setNdaFormData] = useState({
     magangId: "",
     tanggal: new Date().toISOString().split("T")[0],
+    masterNdaId: "",
   });
 
   // Upload NDA Modal State
@@ -589,9 +591,10 @@ export default function MagangDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [resMagang, resBidang] = await Promise.all([
+      const [resMagang, resBidang, resNda] = await Promise.all([
         getMagangList(),
         getBidangs().catch(() => ({ data: [] })),
+        getMasterNdaList().catch(() => ({ data: [] })),
       ]);
       if (resMagang?.data) {
         const sorted = [...resMagang.data].sort((a: any, b: any) => (a.id || 0) - (b.id || 0));
@@ -599,6 +602,9 @@ export default function MagangDashboard() {
       }
       if (resBidang?.data) {
         setBidangs(resBidang.data);
+      }
+      if (resNda?.data) {
+        setMasterNdas(resNda.data);
       }
     } catch (error) {
       console.error("Failed to fetch magang data", error);
@@ -661,6 +667,7 @@ export default function MagangDashboard() {
     setNdaFormData({
       magangId: unprinted.length > 0 ? String(unprinted[0].id) : "",
       tanggal: new Date().toISOString().split("T")[0],
+      masterNdaId: masterNdas.length > 0 ? String(masterNdas[0].id) : "",
     });
     setIsNdaModalOpen(true);
   };
@@ -669,6 +676,7 @@ export default function MagangDashboard() {
     setNdaFormData({
       magangId: String(magangId),
       tanggal: new Date().toISOString().split("T")[0],
+      masterNdaId: masterNdas.length > 0 ? String(masterNdas[0].id) : "",
     });
     setIsNdaModalOpen(true);
   };
@@ -685,6 +693,12 @@ export default function MagangDashboard() {
       alert("Data anak magang tidak ditemukan.");
       return;
     }
+
+    const selectedNda = masterNdas.find((n) => String(n.id) === String(ndaFormData.masterNdaId)) || masterNdas[0];
+    const namaPihakPertama = selectedNda?.nama_pihak_pertama || "Dian Istanti, S.Sos, MAP";
+    const nipPihakPertama = selectedNda?.nip_pihak_pertama || "19690519 199803 2 001";
+    const jabatanPihakPertama = selectedNda?.jabatan_pihak_pertama || "Kepala Bidang Aplikasi Informatika";
+    const instansiPihakPertama = selectedNda?.instansi_pihak_pertama || "Dinas Komunikasi dan Informatika Provinsi Jawa Barat";
 
     const selectedIndex = magangs.findIndex((m) => String(m.id) === String(ndaFormData.magangId));
     const seqNumber = String(selectedIndex >= 0 ? selectedIndex + 7 : 7).padStart(2, "0");
@@ -843,21 +857,21 @@ export default function MagangDashboard() {
             <tr>
               <td class="label">1. Nama</td>
               <td class="colon">:</td>
-              <td>Dian Istanti, S.Sos, MAP</td>
+              <td>${namaPihakPertama}</td>
             </tr>
             <tr>
               <td class="label">&nbsp;&nbsp;&nbsp;NIP</td>
               <td class="colon">:</td>
-              <td>19690519 199803 2 001</td>
+              <td>${nipPihakPertama || "-"}</td>
             </tr>
             <tr>
               <td class="label">&nbsp;&nbsp;&nbsp;Jabatan</td>
               <td class="colon">:</td>
-              <td>Kepala Bidang Aplikasi Informatika</td>
+              <td>${jabatanPihakPertama || "-"}</td>
             </tr>
           </table>
           <p style="margin-left: 0;">
-            yang bertindak sebagai dan atas nama Dinas Komunikasi dan Informatika Provinsi Jawa Barat untuk selanjutnya disebut sebagai <strong>PIHAK PERTAMA</strong>.
+            yang bertindak sebagai dan atas nama ${instansiPihakPertama} untuk selanjutnya disebut sebagai <strong>PIHAK PERTAMA</strong>.
           </p>
         </div>
 
@@ -1566,6 +1580,25 @@ export default function MagangDashboard() {
               </p>
             )}
           </div>
+
+          {masterNdas.length > 0 && (
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Pihak Pertama (Master NDA)
+              </label>
+              <select
+                value={ndaFormData.masterNdaId}
+                onChange={(e) => setNdaFormData({ ...ndaFormData, masterNdaId: e.target.value })}
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all font-medium text-slate-800 bg-white"
+              >
+                {masterNdas.map((nda) => (
+                  <option key={nda.id} value={nda.id}>
+                    {nda.judul} - {nda.nama_pihak_pertama}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
