@@ -11,6 +11,7 @@ import {
   deleteRekening,
   getAlatAngkutanList,
   deleteAlatAngkutan,
+  getBidangs,
 } from "@/services/api";
 import { showToast } from "@/components/ui/Toast";
 import {
@@ -109,11 +110,11 @@ export default function SpdInputPage() {
 
     const fetchBidang = async () => {
       try {
-        // Langsung tembak ke URL backend Laravel secara eksplisit
-        const res = await fetch("http://127.0.0.1:8000/api/bidangs");
-        const json = await res.json();
-        if (json.success) {
-          setBidangOptions(json.data);
+        const res = await getBidangs();
+        if (res.success && Array.isArray(res.data)) {
+          setBidangOptions(res.data);
+        } else if (Array.isArray(res)) {
+          setBidangOptions(res);
         }
       } catch (error) {
         console.error("Gagal mengambil data bidang:", error);
