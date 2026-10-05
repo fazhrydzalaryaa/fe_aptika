@@ -21,9 +21,12 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Building2,
+  Lock,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import ServiceRouteGuard from "@/components/auth/ServiceRouteGuard";
+import { useAuthStore } from "@/store/useAuthStore";
 import HakAksesTiExportModal from "@/components/smki/HakAksesTiExportModal";
 import {
   getHakAksesTiList,
@@ -35,6 +38,7 @@ import {
 
 export default function HakAksesTiPage() {
   const router = useRouter();
+  const { bidang } = useAuthStore();
 
   const [items, setItems] = useState<HakAksesTiItem[]>([]);
   const [stats, setStats] = useState({
@@ -157,26 +161,53 @@ export default function HakAksesTiPage() {
   return (
     <ServiceRouteGuard requiredService="SMKI">
       <div className="flex flex-col gap-6 pb-12">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <nav className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 mb-1.5">
-              <span>Beranda</span>
-              <span>/</span>
-              <span className="text-slate-600 dark:text-slate-300">Manajemen Hak Akses TI</span>
-            </nav>
-            <h1 className="text-2xl font-extrabold text-slate-800 dark:text-white">Daftar Formulir Hak Akses TI</h1>
+        {/* Hero Banner SMKI Standar */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#064e3b] via-[#047857] to-[#059669] p-6 sm:p-7 text-white shadow-lg">
+          <div className="absolute -right-10 -bottom-10 w-56 h-56 rounded-full bg-emerald-400/20 blur-2xl pointer-events-none" />
+          <div className="absolute right-36 -top-12 w-48 h-48 rounded-full bg-teal-300/15 blur-xl pointer-events-none" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="max-w-2xl flex items-start gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
+                <Lock size={22} className="text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-1.5">
+                  Formulir Hak Akses TI (FR-018)
+                </h1>
+                <p className="text-xs sm:text-sm text-emerald-100 leading-relaxed">
+                  Pencatatan, pengajuan, dan verifikasi permohonan hak akses sistem informasi, penetapan level &amp; jenis akses sesuai standar ISO 27001 SMKI.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2.5 flex-shrink-0">
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/15 text-xs font-semibold">
+                <Building2 size={16} className="text-emerald-200" />
+                <span>Unit Kerja: <strong className="text-white">{bidang?.name || "Semua Bidang"}</strong></span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/15 text-xs font-semibold">
+                <FileDown size={16} className="text-emerald-200" />
+                <span>Format Ekspor: <strong className="text-white">Microsoft Word (.docx)</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <ShieldCheck size={16} className="text-emerald-600" />
+            <span>Kepatuhan Akses Pengguna Diskominfo Jawa Barat</span>
           </div>
           <div className="flex items-center gap-2.5 flex-wrap">
             <button
               onClick={() => openExport("all")}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-50 transition-all"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-50 transition-all shadow-xs"
             >
               <FileText size={15} /> Cetak Rekap
             </button>
             <button
               onClick={() => openExport("all")}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60 hover:bg-teal-100 font-bold text-xs transition-all"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60 hover:bg-teal-100 font-bold text-xs transition-all shadow-xs"
             >
               <FileDown size={15} /> Ekspor (DOCX)
             </button>

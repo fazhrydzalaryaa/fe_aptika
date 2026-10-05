@@ -419,46 +419,35 @@ export default function FormulirRencanaAuditPage() {
         
         {/* ============================================================ */}
         {/* ============================================================ */}
-        {/* 2. HERO BANNER WITH CIRCUIT SHIELD GRAPHIC                   */}
+        {/* 2. HERO BANNER SMKI STANDAR                                  */}
         {/* ============================================================ */}
-        <div className="relative overflow-hidden bg-white rounded-2xl p-6 sm:p-7 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="max-w-2xl z-10">
-            {/* Pill Tag */}
-            <div className="mb-3">
-              <span className="inline-block px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0]">
-                SISTEM MANAJEMEN KEAMANAN INFORMASI
-              </span>
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#064e3b] via-[#047857] to-[#059669] p-6 sm:p-7 text-white shadow-lg">
+          <div className="absolute -right-10 -bottom-10 w-56 h-56 rounded-full bg-emerald-400/20 blur-2xl pointer-events-none" />
+          <div className="absolute right-36 -top-12 w-48 h-48 rounded-full bg-teal-300/15 blur-xl pointer-events-none" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="max-w-2xl flex items-start gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
+                <CalendarCheck size={22} className="text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-1.5">
+                  Formulir Rencana Audit (F05-SMKI)
+                </h1>
+                <p className="text-xs sm:text-sm text-emerald-100 leading-relaxed">
+                  Perencanaan dan penjadwalan kegiatan audit internal SMKI di lingkungan Aptika, penentuan kontrol ISO 27001, auditee, auditor, serta ekspor dokumen resmi.
+                </p>
+              </div>
             </div>
-
-            {/* Title */}
-            <h1 className="text-2xl sm:text-[26px] font-extrabold text-slate-900 tracking-tight">
-              Formulir Rencana Audit (F05-SMKI)
-            </h1>
-
-            {/* Description */}
-            <p className="text-xs sm:text-[13px] text-slate-600 mt-2 leading-relaxed max-w-xl">
-              Halaman ini digunakan untuk merencanakan dan menjadwalkan kegiatan audit internal SMKI di lingkungan Aptika. Pastikan semua persyaratan kontrol telah sesuai dengan standar ISO 27001.
-            </p>
-          </div>
-
-          {/* Right Circuit/Shield Aesthetic Illustration Graphic */}
-          <div className="relative flex-shrink-0 flex items-center justify-center w-56 h-36 opacity-85">
-            <div className="absolute inset-0 bg-radial from-emerald-100/60 to-transparent blur-xl rounded-full" />
-            <svg viewBox="0 0 200 120" className="w-full h-full text-emerald-600/70" fill="none">
-              <circle cx="100" cy="60" r="38" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" />
-              <circle cx="100" cy="60" r="28" stroke="currentColor" strokeWidth="1.2" />
-              <path d="M100 38 L116 48 L116 70 L100 80 L84 70 L84 48 Z" stroke="currentColor" strokeWidth="1.8" fill="rgba(16, 185, 129, 0.08)" />
-              <circle cx="100" cy="60" r="6" fill="currentColor" fillOpacity="0.4" />
-              {/* Circuit traces */}
-              <path d="M138 60 L170 60 M170 60 L180 50 M170 60 L180 70" stroke="currentColor" strokeWidth="1.2" />
-              <circle cx="180" cy="50" r="2.5" fill="currentColor" />
-              <circle cx="180" cy="70" r="2.5" fill="currentColor" />
-              <path d="M62 60 L30 60 M30 60 L20 50 M30 60 L20 70" stroke="currentColor" strokeWidth="1.2" />
-              <circle cx="20" cy="50" r="2.5" fill="currentColor" />
-              <circle cx="20" cy="70" r="2.5" fill="currentColor" />
-              <path d="M100 22 L100 6 M100 6 L90 0 M100 6 L110 0" stroke="currentColor" strokeWidth="1.2" />
-              <path d="M100 98 L100 114 M100 114 L90 120 M100 114 L110 120" stroke="currentColor" strokeWidth="1.2" />
-            </svg>
+            <div className="flex flex-col gap-2.5 flex-shrink-0">
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/15 text-xs font-semibold">
+                <Building2 size={16} className="text-emerald-200" />
+                <span>Unit Kerja: <strong className="text-white">{bidang?.name || "Semua Bidang"}</strong></span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/15 text-xs font-semibold">
+                <FileDown size={16} className="text-emerald-200" />
+                <span>Format Ekspor: <strong className="text-white">PDF / DOCX (F05-SMKI)</strong></span>
+              </div>
+            </div>
           </div>
         </div>
 
