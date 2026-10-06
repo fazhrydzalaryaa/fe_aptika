@@ -110,7 +110,7 @@ docker compose version
 Clone repository frontend:
 
 ```bash
-git clone https://github.com/tabahmp/fe_aptika.git
+git clone https://github.com/fazhrydzalaryaa/fe_aptika.git
 ```
 
 Masuk ke folder project:
